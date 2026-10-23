@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Athal Prop Hunt 3D | Live Multiplayer Action</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="brand">
+      <div class="brand-logo">📦🕵️</div>
+      <div class="brand-text">
+        <h1>ATHAL PROP HUNT 3D</h1>
+        <span>MULTIPLAYER LIVE ACTION & AI REWARDS</span>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <div class="user-pill">
+        <span>👤</span>
+        <span id="user-bar-name">Guest</span>
+      </div>
+      <button id="btn-show-vault" class="btn-ghost">🏆 Agent Vault (Gifts)</button>
+      <button id="btn-show-leaderboard" class="btn-ghost">🥇 Leaderboard</button>
+      <button id="btn-logout" class="btn-ghost">Logout</button>
+    </div>
+  </nav>
+
+  <!-- 3D WebGL Canvas Container -->
+  <div id="game-canvas-container"></div>
+
+  <!-- 1. AUTH MODAL (Login / Register / Guest) -->
+  <div id="auth-modal" class="app-modal">
+    <div class="modal-box">
+      <div class="brand" style="justify-content: center; margin-bottom: 10px;">
+        <span style="font-size: 36px;">📦✨</span>
+        <div class="brand-text">
+          <h1>PROP HUNT 3D</h1>
+          <span>ENTER THE ARENA</span>
+        </div>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="btn-tab-login" class="tab-btn active">Login</button>
+        <button id="btn-tab-register" class="tab-btn">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="form-login" class="auth-form">
+        <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
+        <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit" class="btn-neon">SIGN IN</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" class="auth-form" style="display: none;">
+        <input type="text" id="reg-username" placeholder="Pick a Username" required>
+        <input type="password" id="reg-password" placeholder="Password (min 4 chars)" required>
+        <button type="submit" class="btn-neon-pink">CREATE ACCOUNT</button>
+      </form>
+
+      <div style="text-align: center; color: var(--text-muted); font-size: 13px;">OR</div>
+      <button id="btn-guest-play" class="btn-ghost" style="width: 100%;">⚡ Quick Guest Play (Instant)</button>
+    </div>
+  </div>
+
+  <!-- 2. LOBBY SCREEN -->
+  <div id="lobby-screen" class="screen">
+    <div class="lobby-layout">
+      <!-- Create & Join panel -->
+      <div class="card-panel">
+        <h3>🚀 PLAY NOW</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <label style="font-size: 13px; color: var(--text-muted);">Create Custom Room:</label>
+          <input type="text" id="input-room-name" placeholder="Room Name (e.g. SL Athal Squad)" class="auth-form input" style="padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color:#fff; border-radius:8px;">
+          <button id="btn-create-room" class="btn-neon">CREATE ROOM</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+          <label style="font-size: 13px; color: var(--text-muted);">Join with Room Code:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="input-join-code" placeholder="ATHAL-123" style="flex:1; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color:#fff; border-radius:8px; text-transform: uppercase;">
+            <button id="btn-join-code" class="btn-ghost">JOIN</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+          🎁 <strong>Winner Rewards:</strong> Every match victory unlocks an exclusive AI-Generated Secret Agent Trophy & Avatar via Free Pollinations API!
+        </div>
+      </div>
+
+      <!-- Active Rooms browser -->
+      <div class="card-panel">
+        <h3>🌐 LIVE PUBLIC ROOMS</h3>
+        <div id="lobby-rooms-list" class="rooms-grid">
+          <div class="empty-lobby">Loading active rooms...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ROOM WAITING SCREEN -->
+  <div id="room-screen" class="screen">
+    <div class="room-waiting-container">
+      <div class="room-waiting-header">
+        <div>
+          <h2 style="font-size: 20px;">LOBBY ROOM</h2>
+          <span style="font-size: 12px; color: var(--text-muted);">Share this room code with friends:</span>
+        </div>
+        <div id="room-title-code" class="room-code-tag">ATHAL-00</div>
+      </div>
+
+      <!-- Players in Room -->
+      <div>
+        <label style="font-size: 13px; color: var(--text-muted); margin-bottom: 6px; display: block;">Agents in Room:</label>
+        <div id="room-players-list" class="players-list-box"></div>
+      </div>
+
+      <!-- Disguise Prop Picker -->
+      <div>
+        <label class="prop-picker-label">Choose your Secret Prop Disguise:</label>
+        <div class="prop-carousel">
+          <button class="prop-selector-btn selected" data-prop="box">📦 Box</button>
+          <button class="prop-selector-btn" data-prop="chair">🪑 Chair</button>
+          <button class="prop-selector-btn" data-prop="plant">🪴 Plant</button>
+          <button class="prop-selector-btn" data-prop="barrel">🛢️ Barrel</button>
+          <button class="prop-selector-btn" data-prop="trash">🗑️ Trash</button>
+          <button class="prop-selector-btn" data-prop="watermelon">🍉 Watermelon</button>
+          <button class="prop-selector-btn" data-prop="tire">🛞 Tire</button>
+          <button class="prop-selector-btn" data-prop="toilet">🚽 Toilet</button>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+        <button id="btn-leave-room" class="btn-ghost">Leave Room</button>
+        <button id="btn-start-match" class="btn-neon-pink" style="display: none; font-size: 16px; padding: 12px 28px;">START MATCH 🎮</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. IN-GAME HUD SCREEN -->
+  <div id="game-screen" class="screen">
+    <!-- Click to focus pointer overlay -->
+    <div id="click-to-play-hint">
+      <h2>CLICK HERE TO PLAY</h2>
+      <p style="color: var(--text-muted);">Mouse locks for 3D camera look & aiming</p>
+    </div>
+
+    <!-- Phase Announcement Banner -->
+    <div id="phase-announcement">🚨 HUNTER IS RELEASED! RUN & HIDE! 🚨</div>
+
+    <!-- In-Game HUD Elements -->
+    <div id="hud-overlay">
+      <!-- Top Center: Timer & Phase -->
+      <div class="hud-top">
+        <div class="timer-box">
+          <span id="hud-phase">HIDING PHASE ⏳</span>
+          <span id="hud-timer">00:25</span>
+        </div>
+      </div>
+
+      <!-- Top Right: Kill feed & announcements -->
+      <div id="kill-feed" style="position: absolute; top: 80px; right: 25px; display: flex; flex-direction: column; gap: 6px;"></div>
+      <div id="taunt-feed" style="position: absolute; top: 140px; right: 25px; background: rgba(245, 158, 11, 0.9); padding: 8px 16px; border-radius: 8px; font-weight: 700; color: #000; display: none;"></div>
+
+      <!-- Bottom Left: Health, Role, Prop -->
+      <div class="hud-bottom-left">
+        <div class="health-container">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="hud-role" class="role-badge role-prop">PROP</span>
+            <span id="hud-health-text" style="font-weight: 800; font-size: 14px;">100 HP</span>
+          </div>
+          <div class="health-bar-track">
+            <div id="hud-health-bar" class="health-bar-fill"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+            <span id="hud-prop-type" style="font-size: 11px; color: var(--text-muted);">Prop: Box</span>
+            <span id="hud-freeze-status" class="badge-unlocked">UNLOCKED 🏃</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Game Chat Box -->
+      <div class="game-chat">
+        <div id="chat-messages" class="chat-box"></div>
+        <form id="chat-form">
+          <input type="text" id="chat-input" placeholder="Type message... (Enter)" autocomplete="off">
+        </form>
+      </div>
+
+      <!-- Hunter Crosshair (visible when role is hunter) -->
+      <div class="crosshair"></div>
+
+      <!-- Bottom Right: Taunts & Key Bindings -->
+      <div class="hud-bottom-right">
+        <div class="taunt-wheel">
+          <span style="font-size: 11px; color: var(--text-muted); align-self: center;">Taunts:</span>
+          <button class="taunt-btn" data-sound="whistle">🗣️ Whistle (T)</button>
+          <button class="taunt-btn" data-sound="quack">🦆 Quack</button>
+          <button class="taunt-btn" data-sound="horn">🛺 Horn</button>
+          <button class="taunt-btn" data-sound="fart">💨 Fart</button>
+          <button class="taunt-btn" data-sound="laugh">😂 Laugh</button>
+        </div>
+        <div class="hud-instructions">
+          WASD: Move | Space: Jump | <strong>F or L: Lock/Freeze Prop</strong> | Left Click: Hunter Shoot | T: Taunt
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. GAME OVER & FREE AI TROPHY MODAL -->
+  <div id="modal-gameover" class="app-modal" style="display: none;">
+    <div class="modal-box modal-box-wide">
+      <h2 id="gameover-winner-title" class="winner-props-text">🏆 SNEAKY PROPS SURVIVED! 🏆</h2>
+      <p id="gameover-msg" style="text-align: center; color: var(--text-muted);"></p>
+
+      <!-- AI Trophy Showcase -->
+      <div class="trophy-showcase">
+        <h3 id="gameover-trophy-title" style="color: var(--amber); font-size: 15px;">🎁 FREE REWARD: Secret Agent Badge</h3>
+        <img id="gameover-trophy-img" src="" alt="Free AI Generated Trophy" />
+        <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
+          ⚡ Generated dynamically via Free Pollinations AI & saved to your Agent Vault!
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <button id="btn-download-trophy" class="btn-neon">Download High-Res Badge 📥</button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 14px;">
+        <button class="btn-ghost close-modal-btn">Return to Lobby</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. AGENT VAULT MODAL (Unlocked AI Trophies) -->
+  <div id="modal-vault" class="app-modal" style="display: none;">
+    <div class="modal-box modal-box-wide">
+      <div class="modal-header">
+        <h2>🏆 Secret Agent Vault & AI Gifts</h2>
+        <button id="btn-close-modal" class="close-modal-btn">&times;</button>
+      </div>
+
+      <!-- Stats Bar -->
+      <div style="display: flex; gap: 16px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;">
+        <div>Wins: <strong id="vault-wins" style="color: var(--cyan);">0</strong></div>
+        <div>Matches: <strong id="vault-matches">0</strong></div>
+        <div>Hunter Kills: <strong id="vault-kills" style="color: var(--pink);">0</strong></div>
+      </div>
+
+      <h3 style="font-size: 14px; color: var(--amber);">Your Unlocked AI Trophies & Badges:</h3>
+      <div id="vault-trophies-list" class="vault-trophies-grid"></div>
+    </div>
+  </div>
+
+  <!-- 7. LEADERBOARD MODAL -->
+  <div id="modal-leaderboard" class="app-modal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>🥇 Global Leaderboard</h2>
+        <button id="btn-close-leaderboard" class="close-modal-btn">&times;</button>
+      </div>
+
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Agent</th>
+            <th>Wins</th>
+            <th>AI Trophies</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/three.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/audio.js"></script>
+  <script src="/js/props.js"></script>
+  <script src="/js/map.js"></script>
+  <script src="/js/game.js"></script>
+  <script src="/js/network.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>
