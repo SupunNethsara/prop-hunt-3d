@@ -56,6 +56,14 @@ class NetworkClient {
       window.authUI.updateRoomScreen(room);
     });
 
+    // Remote player joined while match is already active
+    this.socket.on('player_joined_midgame', (player) => {
+      if (window.game) {
+        window.game.updateRemotePlayer(player);
+        window.showToast(`${player.displayName} joined the match as a Prop!`, 'info');
+      }
+    });
+
     // Match Start
     this.socket.on('game_started', (room) => {
       this.currentRoom = room;

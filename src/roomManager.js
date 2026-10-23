@@ -75,6 +75,7 @@ class RoomManager {
     if (isHost) room.hostId = socket.id;
 
     const defaultProp = PROP_TYPES[Math.floor(Math.random() * PROP_TYPES.length)];
+    const randomSpawn = SPAWN_POINTS_PROPS[Math.floor(Math.random() * SPAWN_POINTS_PROPS.length)];
 
     const player = {
       socketId: socket.id,
@@ -82,9 +83,9 @@ class RoomManager {
       displayName: user?.displayName || user?.username || `Guest_${socket.id.substring(0, 4)}`,
       role: 'prop', // default until game starts
       propType: defaultProp,
-      x: 0,
-      y: 1,
-      z: 0,
+      x: randomSpawn.x,
+      y: randomSpawn.y,
+      z: randomSpawn.z,
       rotY: 0,
       isAlive: true,
       health: 100,
@@ -99,6 +100,9 @@ class RoomManager {
 
     // Notify room
     this.io.to(roomId).emit('room_update', this.getRoomDetails(room));
+    if (room.state === 'HIDING' || room.state === 'HUNTING') {
+      socket.to(roomId).emit('player_joined_midgame', player);
+    }
     this.broadcastLobbyList();
 
     return { success: true, room: this.getRoomDetails(room), player };
