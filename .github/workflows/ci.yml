@@ -1,0 +1,38 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Code Syntax & Integrity Check
+      run: |
+        node --check server.js
+        node --check src/database.js
+        node --check src/roomManager.js
+
+    - name: Server Startup Smoke Test
+      run: |
+        node server.js &
+        SERVER_PID=$!
+        sleep 4
+        curl -f http://localhost:3000/api/rooms || exit 1
+        kill $SERVER_PID
