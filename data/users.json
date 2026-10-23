@@ -1,1 +1,25 @@
-{}
+{
+  "supunmax663@gmail.com": {
+    "username": "supunmax663@gmail.com",
+    "displayName": "supunmax663@gmail.com",
+    "passwordHash": "$2b$10$OxUCr411vZzLt34fj4SFEeWTGzZa.AqXf9L5Ys6vXI.XGx3dgfTlC",
+    "createdAt": "2026-10-23T17:32:45.139Z",
+    "stats": {
+      "matchesPlayed": 1,
+      "wins": 1,
+      "hunterKills": 0,
+      "propsDiscovered": 0,
+      "survivalWins": 1,
+      "tauntsUsed": 2
+    },
+    "trophies": [
+      {
+        "title": "Grand Master of Disguise",
+        "imageUrl": "https://image.pollinations.ai/prompt/Cute%20hilarious%20secret%20agent%20disguised%20as%20a%203D%20toilet%20wearing%20tiny%20sunglasses%20and%20mustache%2C%20golden%20trophy%20stand%2C%20epic%20stealth%20champion%20banner%2C%203d%20pixar%20style%20render%2C%20colorful%20lighting?width=768&height=768&nologo=true&seed=917843",
+        "winnerSide": "props",
+        "matchDate": "10/23/2026",
+        "unlockedAt": "2026-10-23T17:36:39.817Z"
+      }
+    ]
+  }
+}

@@ -67,29 +67,29 @@ class GameEngine {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Lighting
-    const ambient = new THREE.AmbientLight(0x404859, 0.8);
+    // 4. Lighting - Bright & Colorful Arcade Feel
+    const ambient = new THREE.AmbientLight(0x8ba2c4, 1.1);
     this.scene.add(ambient);
 
-    const dirLight = new THREE.DirectionalLight(0xaaccff, 0.9);
-    dirLight.position.set(20, 40, 20);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(20, 45, 20);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 100;
-    dirLight.shadow.camera.left = -35;
-    dirLight.shadow.camera.right = 35;
-    dirLight.shadow.camera.top = 35;
-    dirLight.shadow.camera.bottom = -35;
     this.scene.add(dirLight);
 
+    // Hemispheric light for beautiful sky-ground bounce
+    const hemiLight = new THREE.HemisphereLight(0x3a506b, 0x1c2541, 0.8);
+    this.scene.add(hemiLight);
+
     // Atmospheric neon colored point lights
-    const p1 = new THREE.PointLight(0x00f0ff, 1.2, 25);
-    p1.position.set(-15, 3, -15);
-    const p2 = new THREE.PointLight(0xff0077, 1.2, 25);
-    p2.position.set(15, 3, 15);
-    this.scene.add(p1, p2);
+    const p1 = new THREE.PointLight(0x00f0ff, 1.5, 30);
+    p1.position.set(-15, 4, -15);
+    const p2 = new THREE.PointLight(0xff0077, 1.5, 30);
+    p2.position.set(15, 4, 15);
+    const p3 = new THREE.PointLight(0xffea00, 1.2, 30);
+    p3.position.set(0, 4, 0);
+    this.scene.add(p1, p2, p3);
 
     // 5. Build Map
     window.MapBuilder.buildMap(this.scene);
@@ -109,26 +109,61 @@ class GameEngine {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // PointerLock for mouse look
+    // PointerLock & Mouse look for 3D camera
     const canvas = this.renderer.domElement;
-    canvas.addEventListener('click', () => {
-      if (!this.mouse.isLocked && document.getElementById('game-screen').classList.contains('active')) {
-        canvas.requestPointerLock();
+    const lockOverlay = document.getElementById('click-to-play-hint');
+
+    const requestLock = () => {
+      if (document.getElementById('game-screen').classList.contains('active')) {
+        try {
+          canvas.requestPointerLock();
+        } catch (err) {
+          console.warn('Pointer lock error:', err);
+        }
+        if (lockOverlay) lockOverlay.style.display = 'none';
+        this.mouse.isLocked = true;
       }
-    });
+    };
+
+    canvas.addEventListener('click', requestLock);
+    if (lockOverlay) {
+      lockOverlay.addEventListener('click', requestLock);
+    }
 
     document.addEventListener('pointerlockchange', () => {
       this.mouse.isLocked = (document.pointerLockElement === canvas);
-      const lockOverlay = document.getElementById('click-to-play-hint');
-      if (lockOverlay) {
-        lockOverlay.style.display = this.mouse.isLocked ? 'none' : 'flex';
+      if (lockOverlay && this.mouse.isLocked) {
+        lockOverlay.style.display = 'none';
       }
     });
 
+    // Support both Pointer Lock AND Mouse Drag
+    let isMouseDown = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    window.addEventListener('mousedown', (e) => {
+      isMouseDown = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => {
+      isMouseDown = false;
+    });
+
     document.addEventListener('mousemove', (e) => {
-      if (!this.mouse.isLocked) return;
-      this.localPlayer.rotY -= e.movementX * this.mouse.sens;
-      this.localPlayer.pitch -= e.movementY * this.mouse.sens;
+      if (this.mouse.isLocked) {
+        this.localPlayer.rotY -= e.movementX * this.mouse.sens;
+        this.localPlayer.pitch -= e.movementY * this.mouse.sens;
+      } else if (isMouseDown && document.getElementById('game-screen').classList.contains('active')) {
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        this.localPlayer.rotY -= dx * this.mouse.sens * 1.5;
+        this.localPlayer.pitch -= dy * this.mouse.sens * 1.5;
+      }
       this.localPlayer.pitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, this.localPlayer.pitch));
     });
 
