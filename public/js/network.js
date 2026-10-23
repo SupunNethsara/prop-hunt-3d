@@ -21,8 +21,9 @@ class NetworkClient {
     this.socket.on('create_room_response', (res) => {
       if (res.success) {
         window.authUI.showRoomScreen(res.room);
+        window.showToast(`Room created! Code: ${res.room.id}`, 'success', 'ROOM READY');
       } else {
-        alert(res.message);
+        window.showToast(res.message, 'error', 'ROOM ERROR');
       }
     });
 
@@ -30,6 +31,7 @@ class NetworkClient {
       if (res.success) {
         this.currentRoom = res.room;
         window.authUI.showRoomScreen(res.room);
+        window.showToast(`Joined Room ${res.room.id}!`, 'success', 'CONNECTED');
         if (window.game) {
           window.game.setLocalPlayer({
             id: this.socket.id,
@@ -39,7 +41,7 @@ class NetworkClient {
           });
         }
       } else {
-        alert(res.message);
+        window.showToast(res.message, 'warning', 'CANNOT JOIN');
       }
     });
 
@@ -128,7 +130,7 @@ class NetworkClient {
       if (data.targetId === this.socket.id && window.game) {
         window.game.localPlayer.role = 'spectator';
         window.game.updateHUD();
-        alert('You were found and eliminated! Spectating remaining props...');
+        window.showToast('You were found and eliminated! Spectating remaining props...', 'error', 'ELIMINATED');
       } else {
         window.game.removeRemotePlayer(data.targetId);
       }

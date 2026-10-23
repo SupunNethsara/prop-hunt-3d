@@ -51,10 +51,10 @@ class GameEngine {
   }
 
   init() {
-    // 1. Scene
+    // 1. Scene with atmospheric twilight sky & depth fog
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0c14);
-    this.scene.fog = new THREE.FogExp2(0x0a0c14, 0.02);
+    this.scene.background = new THREE.Color(0x0c111e);
+    this.scene.fog = new THREE.FogExp2(0x0c111e, 0.012);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);

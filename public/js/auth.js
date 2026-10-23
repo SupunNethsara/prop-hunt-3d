@@ -128,12 +128,13 @@ class AuthUI {
       if (data.success) {
         this.currentUser = data.user;
         localStorage.setItem('prophunt_user', JSON.stringify(data.user));
+        window.showToast(`Welcome, Agent ${data.user.displayName}!`, 'success', 'ACCESS GRANTED');
         this.checkLoginStatus();
       } else {
-        alert(data.message);
+        window.showToast(data.message, 'error', 'AUTHENTICATION FAILED');
       }
     } catch (err) {
-      alert('Login error. Please try again.');
+      window.showToast('Login server error. Please try again.', 'error');
     }
   }
 
@@ -152,12 +153,13 @@ class AuthUI {
       if (data.success) {
         this.currentUser = data.user;
         localStorage.setItem('prophunt_user', JSON.stringify(data.user));
+        window.showToast(`Agent profile registered successfully for ${data.user.displayName}!`, 'success', 'ACCOUNT CREATED');
         this.checkLoginStatus();
       } else {
-        alert(data.message);
+        window.showToast(data.message, 'warning', 'REGISTRATION NOTICE');
       }
     } catch (err) {
-      alert('Registration error. Please try again.');
+      window.showToast('Registration error. Please try again.', 'error');
     }
   }
 

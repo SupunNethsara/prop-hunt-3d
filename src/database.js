@@ -33,28 +33,34 @@ function writeUsers(users) {
   }
 }
 
+function normalizeKey(str) {
+  return (str || '').trim().toLowerCase().replace(/\s+/g, '_');
+}
+
 const Database = {
   // Register a new user
   register(username, password) {
-    username = username.trim().toLowerCase();
-    if (!username || username.length < 3) {
-      return { success: false, message: 'Username must be at least 3 characters.' };
+    const rawName = (username || '').trim();
+    const key = normalizeKey(rawName);
+
+    if (!key || key.length < 2) {
+      return { success: false, message: 'Username must be at least 2 characters.' };
     }
-    if (!password || password.length < 4) {
-      return { success: false, message: 'Password must be at least 4 characters.' };
+    if (!password || password.length < 3) {
+      return { success: false, message: 'Password must be at least 3 characters.' };
     }
 
     const users = readUsers();
-    if (users[username]) {
-      return { success: false, message: 'Username is already taken.' };
+    if (users[key]) {
+      return { success: false, message: 'Username is already taken. Try signing in!' };
     }
 
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
 
     const newUser = {
-      username,
-      displayName: username,
+      username: key,
+      displayName: rawName,
       passwordHash: hash,
       createdAt: new Date().toISOString(),
       stats: {
@@ -68,11 +74,12 @@ const Database = {
       trophies: [] // Array of AI rewards & badges
     };
 
-    users[username] = newUser;
+    users[key] = newUser;
     writeUsers(users);
 
     return {
       success: true,
+      message: `Account created for ${rawName}!`,
       user: {
         username: newUser.username,
         displayName: newUser.displayName,
@@ -82,26 +89,36 @@ const Database = {
     };
   },
 
-  // Login
+  // Login (With Smart Auto-Restore)
   login(username, password) {
-    username = username.trim().toLowerCase();
-    const users = readUsers();
-    const user = users[username];
+    const rawName = (username || '').trim();
+    const key = normalizeKey(rawName);
 
+    if (!key) {
+      return { success: false, message: 'Please enter a username.' };
+    }
+
+    const users = readUsers();
+    const user = users[key];
+
+    // If user does not exist (e.g. server redeployed by Render), auto-create seamlessly!
     if (!user) {
-      return { success: false, message: 'User not found.' };
+      if (!password || password.length < 3) {
+        return { success: false, message: 'Please enter a password with at least 3 characters.' };
+      }
+      return this.register(username, password);
     }
 
     const valid = bcrypt.compareSync(password, user.passwordHash);
     if (!valid) {
-      return { success: false, message: 'Incorrect password.' };
+      return { success: false, message: 'Incorrect password for this username.' };
     }
 
     return {
       success: true,
       user: {
         username: user.username,
-        displayName: user.displayName,
+        displayName: user.displayName || user.username,
         stats: user.stats,
         trophies: user.trophies || []
       }
@@ -110,13 +127,13 @@ const Database = {
 
   // Get user profile
   getUser(username) {
-    username = username.trim().toLowerCase();
+    const key = normalizeKey(username);
     const users = readUsers();
-    const user = users[username];
+    const user = users[key];
     if (!user) return null;
     return {
       username: user.username,
-      displayName: user.displayName,
+      displayName: user.displayName || user.username,
       stats: user.stats,
       trophies: user.trophies || []
     };
@@ -125,9 +142,9 @@ const Database = {
   // Update stats on match completion
   recordMatch(username, isWinner, role, kills = 0, taunts = 0) {
     if (!username) return;
-    username = username.trim().toLowerCase();
+    const key = normalizeKey(username);
     const users = readUsers();
-    const user = users[username];
+    const user = users[key];
     if (!user) return;
 
     user.stats.matchesPlayed = (user.stats.matchesPlayed || 0) + 1;
@@ -148,9 +165,9 @@ const Database = {
   // Add Trophy to user inventory
   addTrophy(username, trophy) {
     if (!username) return;
-    username = username.trim().toLowerCase();
+    const key = normalizeKey(username);
     const users = readUsers();
-    const user = users[username];
+    const user = users[key];
     if (!user) return;
 
     if (!user.trophies) user.trophies = [];
