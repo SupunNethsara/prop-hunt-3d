@@ -140,8 +140,11 @@
       </div>
 
       <!-- Actions -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; width: 100%;">
         <button id="btn-leave-room" class="btn-ghost">Leave Room</button>
+        <div id="wait-for-host-badge" class="badge-waiting-host" style="display: none;">
+          <span class="pulse-dot"></span> ⏳ Waiting for Host to start match...
+        </div>
         <button id="btn-start-match" class="btn-neon-pink" style="display: none; font-size: 16px; padding: 12px 28px;">START MATCH 🎮</button>
       </div>
     </div>

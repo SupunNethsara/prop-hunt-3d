@@ -306,8 +306,21 @@ class AuthUI {
 
     const isHost = (window.network.socket.id === room.hostId);
     const startBtn = document.getElementById('btn-start-match');
+    const waitBadge = document.getElementById('wait-for-host-badge');
+    const hostPlayer = (room.players || []).find(p => p.id === room.hostId);
+    const hostName = hostPlayer ? hostPlayer.displayName : 'Host';
+
     if (startBtn) {
       startBtn.style.display = isHost ? 'block' : 'none';
+      if (isHost) {
+        const count = (room.players || []).length;
+        startBtn.innerText = `START MATCH 🎮 (${count} Agent${count > 1 ? 's' : ''})`;
+      }
+    }
+
+    if (waitBadge) {
+      waitBadge.style.display = isHost ? 'none' : 'flex';
+      waitBadge.innerHTML = `<span class="pulse-dot"></span> ⏳ Waiting for Host (<strong>${hostName}</strong>) to click START MATCH...`;
     }
   }
 

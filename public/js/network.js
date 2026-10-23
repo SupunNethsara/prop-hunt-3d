@@ -30,15 +30,21 @@ class NetworkClient {
     this.socket.on('join_room_response', (res) => {
       if (res.success) {
         this.currentRoom = res.room;
-        window.authUI.showRoomScreen(res.room);
-        window.showToast(`Joined Room ${res.room.id}!`, 'success', 'CONNECTED');
-        if (window.game) {
-          window.game.setLocalPlayer({
-            id: this.socket.id,
-            username: res.player.username,
-            role: res.player.role,
-            propType: res.player.propType
-          });
+        if (res.room.state === 'HIDING' || res.room.state === 'HUNTING') {
+          // If match is already in progress, enter game immediately
+          window.authUI.launchGameScreen(res.room);
+          if (window.game) {
+            window.game.setLocalPlayer(res.player);
+            (res.room.players || []).forEach(p => {
+              if (p.id !== this.socket.id) {
+                window.game.updateRemotePlayer(p);
+              }
+            });
+          }
+          window.showToast(`Joined ongoing match in Room ${res.room.id}!`, 'success', 'IN-GAME');
+        } else {
+          window.authUI.showRoomScreen(res.room);
+          window.showToast(`Joined Room ${res.room.id}!`, 'success', 'CONNECTED');
         }
       } else {
         window.showToast(res.message, 'warning', 'CANNOT JOIN');
@@ -55,9 +61,18 @@ class NetworkClient {
       this.currentRoom = room;
       window.authUI.launchGameScreen(room);
 
-      const myData = room.players.find(p => p.id === this.socket.id);
+      const myData = (room.players || []).find(p => p.id === this.socket.id);
       if (myData && window.game) {
         window.game.setLocalPlayer(myData);
+      }
+
+      // Spawn all other multiplayer agents in 3D scene
+      if (window.game && room.players) {
+        room.players.forEach(p => {
+          if (p.id !== this.socket.id) {
+            window.game.updateRemotePlayer(p);
+          }
+        });
       }
     });
 
