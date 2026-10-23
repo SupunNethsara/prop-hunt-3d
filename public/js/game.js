@@ -40,7 +40,8 @@ class GameEngine {
 
     this.mouse = {
       isLocked: false,
-      sens: 0.0025
+      sens: 0.0025,
+      invertY: false
     };
 
     this.raycaster = new THREE.Raycaster();
@@ -152,17 +153,25 @@ class GameEngine {
       isMouseDown = false;
     });
 
+    document.getElementById('btn-toggle-inverty')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.mouse.invertY = !this.mouse.invertY;
+      const btn = document.getElementById('btn-toggle-inverty');
+      if (btn) btn.innerText = `Invert Y: ${this.mouse.invertY ? 'ON' : 'OFF'}`;
+    });
+
     document.addEventListener('mousemove', (e) => {
+      const multY = this.mouse.invertY ? -1 : 1;
       if (this.mouse.isLocked) {
         this.localPlayer.rotY -= e.movementX * this.mouse.sens;
-        this.localPlayer.pitch -= e.movementY * this.mouse.sens;
+        this.localPlayer.pitch -= e.movementY * this.mouse.sens * multY;
       } else if (isMouseDown && document.getElementById('game-screen').classList.contains('active')) {
         const dx = e.clientX - lastX;
         const dy = e.clientY - lastY;
         lastX = e.clientX;
         lastY = e.clientY;
         this.localPlayer.rotY -= dx * this.mouse.sens * 1.5;
-        this.localPlayer.pitch -= dy * this.mouse.sens * 1.5;
+        this.localPlayer.pitch -= dy * this.mouse.sens * 1.5 * multY;
       }
       this.localPlayer.pitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, this.localPlayer.pitch));
     });
@@ -522,14 +531,15 @@ class GameEngine {
       if (lp.mesh) lp.mesh.visible = true;
 
       const camDist = 3.5;
-      const camHeight = 1.6;
-      // Camera is placed behind the player (in direction opposite to forward)
+      const camHeight = 1.4;
+      // Moving mouse UP points target higher and lowers camera slightly (natural look UP)
       const cx = lp.x + Math.sin(lp.rotY) * camDist * Math.cos(lp.pitch);
       const cz = lp.z + Math.cos(lp.rotY) * camDist * Math.cos(lp.pitch);
-      const cy = lp.y + camHeight + Math.sin(lp.pitch) * camDist;
+      const cy = lp.y + camHeight - Math.sin(lp.pitch) * 1.5;
+      const targetY = lp.y + 0.6 + Math.sin(lp.pitch) * 2.0;
 
       this.camera.position.set(cx, Math.max(0.3, cy), cz);
-      this.camera.lookAt(lp.x, lp.y + 0.6, lp.z);
+      this.camera.lookAt(lp.x, targetY, lp.z);
     }
   }
 
