@@ -23,7 +23,14 @@ class RoomManager {
     this.playerRooms = new Map(); // socketId -> roomId
 
     // Periodic room tick (timer updates & game loop)
-    setInterval(() => this.tick(), 1000);
+    setInterval(() => {
+      this.tick();
+    }, 1000);
+
+    // Periodic lobby broadcast
+    setInterval(() => {
+      this.broadcastLobbyList();
+    }, 3000);
   }
 
   // Create a new room
@@ -50,7 +57,7 @@ class RoomManager {
     this.rooms.set(roomId, room);
     this.joinRoom(roomId, hostSocket, hostUser);
 
-    return { success: true, room: this.getRoomSummary(room) };
+    return { success: true, room: this.getRoomDetails(room) };
   }
 
   // Join existing room

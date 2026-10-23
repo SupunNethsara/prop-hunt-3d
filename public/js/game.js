@@ -428,22 +428,41 @@ class GameEngine {
 
     // If prop is frozen/locked, skip position updates
     if (lp.role === 'prop' && lp.isFrozen) {
-      // Allow camera looking around without moving mesh
       lp.mesh.position.set(lp.x, lp.y, lp.z);
-      // Freeze mesh rotation to locked orientation
       return;
     }
 
     const speed = (lp.role === 'hunter' ? 9.5 : 7.0) * delta;
-    const moveX = (this.keys.right ? 1 : 0) - (this.keys.left ? 1 : 0);
-    const moveZ = (this.keys.backward ? 1 : 0) - (this.keys.forward ? 1 : 0);
 
-    if (moveX !== 0 || moveZ !== 0) {
-      const angle = lp.rotY + Math.atan2(moveX, moveZ);
-      const nextX = lp.x + Math.sin(angle) * speed;
-      const nextZ = lp.z + Math.cos(angle) * speed;
+    // W = Forward, S = Backward, D = Right, A = Left
+    let forward = 0;
+    if (this.keys.forward) forward += 1;
+    if (this.keys.backward) forward -= 1;
 
-      // Check collision
+    let strafe = 0;
+    if (this.keys.right) strafe += 1;
+    if (this.keys.left) strafe -= 1;
+
+    if (forward !== 0 || strafe !== 0) {
+      // Normalize input so diagonal movement isn't faster
+      const len = Math.hypot(forward, strafe);
+      const normF = forward / len;
+      const normS = strafe / len;
+
+      // Standard 3D orientation:
+      // Looking down -Z when rotY = 0
+      const fX = -Math.sin(lp.rotY);
+      const fZ = -Math.cos(lp.rotY);
+      const rX = Math.cos(lp.rotY);
+      const rZ = -Math.sin(lp.rotY);
+
+      const moveX = (fX * normF + rX * normS) * speed;
+      const moveZ = (fZ * normF + rZ * normS) * speed;
+
+      const nextX = lp.x + moveX;
+      const nextZ = lp.z + moveZ;
+
+      // Check collision with arena walls
       if (!window.MapBuilder.checkCollision(nextX, lp.z)) {
         lp.x = nextX;
       }
@@ -451,7 +470,8 @@ class GameEngine {
         lp.z = nextZ;
       }
 
-      lp.mesh.rotation.y = angle;
+      // Prop model faces look direction
+      lp.mesh.rotation.y = lp.rotY;
     }
 
     // Gravity & Jump
@@ -459,7 +479,7 @@ class GameEngine {
     lp.vy -= gravity;
     lp.y += lp.vy * delta;
 
-    const groundY = (lp.role === 'prop') ? 0.0 : 0.0;
+    const groundY = 0.0;
     if (lp.y <= groundY) {
       lp.y = groundY;
       lp.vy = 0;
@@ -498,13 +518,14 @@ class GameEngine {
       // Hide own hunter model in first person
       if (lp.mesh) lp.mesh.visible = false;
     } else {
-      // Third-person smooth follow for Props (so player can see how funny/hidden they look!)
+      // Third-person smooth follow for Props (camera behind player looking forward)
       if (lp.mesh) lp.mesh.visible = true;
 
       const camDist = 3.5;
       const camHeight = 1.6;
-      const cx = lp.x - Math.sin(lp.rotY) * camDist * Math.cos(lp.pitch);
-      const cz = lp.z - Math.cos(lp.rotY) * camDist * Math.cos(lp.pitch);
+      // Camera is placed behind the player (in direction opposite to forward)
+      const cx = lp.x + Math.sin(lp.rotY) * camDist * Math.cos(lp.pitch);
+      const cz = lp.z + Math.cos(lp.rotY) * camDist * Math.cos(lp.pitch);
       const cy = lp.y + camHeight + Math.sin(lp.pitch) * camDist;
 
       this.camera.position.set(cx, Math.max(0.3, cy), cz);

@@ -93,7 +93,10 @@
 
       <!-- Active Rooms browser -->
       <div class="card-panel">
-        <h3>🌐 LIVE PUBLIC ROOMS</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <h3 style="border-bottom: none; padding-bottom: 0;">🌐 LIVE PUBLIC ROOMS</h3>
+          <button id="btn-refresh-rooms" class="btn-ghost" style="padding: 4px 10px; font-size: 11px;">🔄 Refresh</button>
+        </div>
         <div id="lobby-rooms-list" class="rooms-grid">
           <div class="empty-lobby">Loading active rooms...</div>
         </div>
@@ -109,7 +112,10 @@
           <h2 style="font-size: 20px;">LOBBY ROOM</h2>
           <span style="font-size: 12px; color: var(--text-muted);">Share this room code with friends:</span>
         </div>
-        <div id="room-title-code" class="room-code-tag">ATHAL-00</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div id="room-title-code" class="room-code-tag">ATHAL-00</div>
+          <button id="btn-copy-invite" class="btn-neon-small" style="margin-top: 0; padding: 8px 14px; font-size: 12px;">📋 Copy Link</button>
+        </div>
       </div>
 
       <!-- Players in Room -->

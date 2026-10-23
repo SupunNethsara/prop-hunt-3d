@@ -2,8 +2,20 @@
 class AuthUI {
   constructor() {
     this.currentUser = JSON.parse(localStorage.getItem('prophunt_user') || 'null');
+    const urlParams = new URLSearchParams(window.location.search);
+    this.pendingRoom = urlParams.get('room') ? urlParams.get('room').toUpperCase() : null;
+    this.currentRoomId = null;
+
     this.setupUI();
     this.checkLoginStatus();
+
+    // Auto-refresh rooms in lobby every 3 seconds
+    setInterval(() => {
+      const lobbyScreen = document.getElementById('lobby-screen');
+      if (lobbyScreen && lobbyScreen.classList.contains('active')) {
+        this.fetchRoomsList();
+      }
+    }, 3000);
   }
 
   setupUI() {
@@ -28,6 +40,19 @@ class AuthUI {
     document.getElementById('btn-join-code')?.addEventListener('click', () => this.handleJoinRoomByCode());
     document.getElementById('btn-start-match')?.addEventListener('click', () => window.network.startGame());
     document.getElementById('btn-leave-room')?.addEventListener('click', () => this.handleLeaveRoom());
+    document.getElementById('btn-refresh-rooms')?.addEventListener('click', () => this.fetchRoomsList());
+
+    // Copy Invite Link Button
+    document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
+      if (this.currentRoomId) {
+        const inviteUrl = `${window.location.origin}/?room=${this.currentRoomId}`;
+        navigator.clipboard.writeText(inviteUrl).then(() => {
+          alert(`📋 Invite link copied!\n\n${inviteUrl}\n\nSend this link to friends on WhatsApp/Discord to join directly!`);
+        }).catch(() => {
+          prompt('Copy this room invite link:', inviteUrl);
+        });
+      }
+    });
 
     // Prop selection buttons
     const propButtons = document.querySelectorAll('.prop-selector-btn');
@@ -162,9 +187,32 @@ class AuthUI {
       authScreen.style.display = 'none';
       lobbyScreen.classList.add('active');
       if (userBarName) userBarName.innerText = this.currentUser.displayName || this.currentUser.username;
+
+      // Check if there was an invite link (?room=CODE)
+      if (this.pendingRoom) {
+        const joinCode = this.pendingRoom;
+        this.pendingRoom = null;
+        window.network.joinRoom(joinCode, this.currentUser);
+      } else {
+        // Fetch active rooms immediately
+        this.fetchRoomsList();
+      }
     } else {
       authScreen.style.display = 'flex';
       lobbyScreen.classList.remove('active');
+    }
+  }
+
+  // Fetch rooms list from REST API
+  async fetchRoomsList() {
+    try {
+      const res = await fetch('/api/rooms');
+      const data = await res.json();
+      if (data.success && data.rooms) {
+        this.renderLobbyList(data.rooms);
+      }
+    } catch (e) {
+      console.error('Failed to fetch rooms list:', e);
     }
   }
 
@@ -219,14 +267,17 @@ class AuthUI {
   }
 
   handleLeaveRoom() {
+    this.currentRoomId = null;
     window.network.leaveRoom();
     document.getElementById('room-screen').classList.remove('active');
     document.getElementById('game-screen').classList.remove('active');
     document.getElementById('lobby-screen').classList.add('active');
+    this.fetchRoomsList();
   }
 
   // Room Screen
   showRoomScreen(room) {
+    this.currentRoomId = room.id;
     document.getElementById('lobby-screen').classList.remove('active');
     document.getElementById('room-screen').classList.add('active');
     document.getElementById('room-title-code').innerText = room.id;
@@ -234,11 +285,13 @@ class AuthUI {
   }
 
   updateRoomScreen(room) {
+    this.currentRoomId = room.id;
     const playerList = document.getElementById('room-players-list');
     if (!playerList) return;
 
     playerList.innerHTML = '';
-    room.players.forEach(p => {
+    const players = room.players || [];
+    players.forEach(p => {
       const item = document.createElement('div');
       item.className = 'player-item';
       item.innerHTML = `
