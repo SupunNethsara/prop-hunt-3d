@@ -164,6 +164,9 @@
 
     <!-- In-Game HUD Elements -->
     <div id="hud-overlay">
+      <!-- Exit Button -->
+      <button id="btn-ingame-exit" class="btn-ghost" style="position: absolute; top: 20px; left: 20px; z-index: 20; font-size: 12px; padding: 8px 14px; pointer-events: auto;">🚪 Exit to Lobby</button>
+
       <!-- Top Center: Timer & Phase -->
       <div class="hud-top">
         <div class="timer-box">
@@ -240,8 +243,9 @@
         </div>
       </div>
 
-      <div style="display: flex; justify-content: center; gap: 14px;">
-        <button class="btn-ghost close-modal-btn">Return to Lobby</button>
+      <div style="display: flex; justify-content: center; gap: 14px; margin-top: 14px; flex-wrap: wrap;">
+        <button id="btn-play-again" class="btn-neon">🎮 Play Again (Same Room)</button>
+        <button id="btn-return-lobby" class="btn-ghost">🏠 Return to Main Lobby</button>
       </div>
     </div>
   </div>

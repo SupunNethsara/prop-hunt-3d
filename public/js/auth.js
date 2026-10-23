@@ -42,6 +42,15 @@ class AuthUI {
     document.getElementById('btn-leave-room')?.addEventListener('click', () => this.handleLeaveRoom());
     document.getElementById('btn-refresh-rooms')?.addEventListener('click', () => this.fetchRoomsList());
 
+    // Game Over & In-Game Navigation
+    document.getElementById('btn-play-again')?.addEventListener('click', () => this.handlePlayAgain());
+    document.getElementById('btn-return-lobby')?.addEventListener('click', () => this.handleReturnToLobby());
+    document.getElementById('btn-ingame-exit')?.addEventListener('click', () => {
+      if (confirm('Exit match and return to Main Lobby?')) {
+        this.handleReturnToLobby();
+      }
+    });
+
     // Copy Invite Link Button
     document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
       if (this.currentRoomId) {
@@ -273,6 +282,28 @@ class AuthUI {
     window.network.leaveRoom();
     document.getElementById('room-screen').classList.remove('active');
     document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('lobby-screen').classList.add('active');
+    this.fetchRoomsList();
+  }
+
+  handlePlayAgain() {
+    this.closeModals();
+    if (document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('room-screen').classList.add('active');
+  }
+
+  handleReturnToLobby() {
+    this.closeModals();
+    if (document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    this.currentRoomId = null;
+    window.network.leaveRoom();
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('room-screen').classList.remove('active');
     document.getElementById('lobby-screen').classList.add('active');
     this.fetchRoomsList();
   }
