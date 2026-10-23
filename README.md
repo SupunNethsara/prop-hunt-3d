@@ -1,5 +1,12 @@
 # 📦🕵️ Athal Prop Hunt 3D (Multiplayer Live Action Game)
 
+[![Live Demo](https://img.shields.io/badge/PLAY_NOW-Live_on_Render-00f0ff?style=for-the-badge&logo=render&logoColor=white)](https://prop-hunt-3d.onrender.com)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/SupunNethsara/prop-hunt-3d)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg?style=for-the-badge)](https://github.com/SupunNethsara/prop-hunt-3d)
+
+> 🎮 **Live Game URL (Play Instantly in Browser):**  
+> 🔗 **[https://prop-hunt-3d.onrender.com](https://prop-hunt-3d.onrender.com)**
+
 An action-packed, fast-paced **3D Multiplayer Prop Hunt (Hide & Seek)** browser game built with **Three.js** and **Socket.io**. Play with friends in real-time, disguise as inanimate 3D objects, taunt the hunter, and earn **Free AI-Generated Secret Agent Trophies & Digital Gifts** for every victory!
 
 ---

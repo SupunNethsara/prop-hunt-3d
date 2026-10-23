@@ -1,7 +1,8 @@
 {
   "name": "prop-hunt-3d",
   "version": "1.0.0",
-  "description": "",
+  "description": "3D Multiplayer Prop Hunt live-action game with user accounts and free AI trophy gifts",
+  "homepage": "https://prop-hunt-3d.onrender.com",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
