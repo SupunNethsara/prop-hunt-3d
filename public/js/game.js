@@ -44,6 +44,11 @@ class GameEngine {
       invertY: false
     };
 
+    // Mobile Virtual Touch Joystick & Look State
+    this.joystick = { x: 0, y: 0, active: false, touchId: null };
+    this.lookTouch = { id: null, lastX: 0, lastY: 0 };
+    this.isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 1024);
+
     this.currentPhase = 'WAITING';
     this.isHidingPhase = false;
     this.fpvBlaster = null;
@@ -205,14 +210,7 @@ class GameEngine {
         case 'KeyF':
         case 'KeyL':
           // Toggle freeze / lock position (for Props)
-          if (this.localPlayer.role === 'prop') {
-            this.localPlayer.isFrozen = !this.localPlayer.isFrozen;
-            const freezeStatus = document.getElementById('hud-freeze-status');
-            if (freezeStatus) {
-              freezeStatus.innerText = this.localPlayer.isFrozen ? 'LOCKED / FROZEN 🔒' : 'UNLOCKED 🏃';
-              freezeStatus.className = this.localPlayer.isFrozen ? 'badge-locked' : 'badge-unlocked';
-            }
-          }
+          this.toggleFreeze();
           break;
         case 'KeyT':
           // Quick taunt
@@ -253,8 +251,8 @@ class GameEngine {
       const gameScreen = document.getElementById('game-screen');
       if (!gameScreen || !gameScreen.classList.contains('active')) return;
 
-      // Ignore clicks on UI elements (buttons, inputs, chat, modals)
-      if (e.target.closest('button, input, form, #modal-gameover, #role-briefing-modal')) {
+      // Ignore clicks on UI elements (buttons, inputs, chat, modals, touch controls)
+      if (e.target.closest('button, input, form, #modal-gameover, #role-briefing-modal, #touch-joystick-zone, .mobile-action-buttons')) {
         return;
       }
 
@@ -271,6 +269,229 @@ class GameEngine {
       } else if (this.localPlayer.role === 'prop') {
         this.showPropShootHint();
       }
+    });
+
+    // 8. Initialize Mobile Touch Controls
+    this.setupTouchControls();
+  }
+
+  // Toggle Freeze for Disguised Props (Both Desktop [F/L] & Mobile Touch [LOCK])
+  toggleFreeze() {
+    if (this.localPlayer.role !== 'prop') return;
+    this.localPlayer.isFrozen = !this.localPlayer.isFrozen;
+    const freezeStatus = document.getElementById('hud-freeze-status');
+    const freezeBtn = document.getElementById('btn-touch-freeze');
+
+    if (freezeStatus) {
+      freezeStatus.innerText = this.localPlayer.isFrozen ? 'LOCKED / FROZEN 🔒' : 'UNLOCKED 🏃';
+      freezeStatus.className = this.localPlayer.isFrozen ? 'badge-locked' : 'badge-unlocked';
+    }
+
+    if (freezeBtn) {
+      const label = freezeBtn.querySelector('.btn-label');
+      if (label) label.innerText = this.localPlayer.isFrozen ? 'UNLOCK' : 'LOCK';
+      freezeBtn.classList.toggle('locked-active', this.localPlayer.isFrozen);
+    }
+  }
+
+  // Mobile Touch Virtual Joystick, Camera Look Drag & Action Buttons
+  setupTouchControls() {
+    if (this.isMobile) {
+      document.body.classList.add('has-touch-controls');
+    }
+
+    // A. Virtual Movement Joystick (Bottom Left)
+    const zone = document.getElementById('touch-joystick-zone');
+    const thumb = document.getElementById('touch-joystick-thumb');
+
+    if (zone && thumb) {
+      const updateThumb = (touch) => {
+        const rect = zone.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dx = touch.clientX - centerX;
+        const dy = touch.clientY - centerY;
+        const dist = Math.hypot(dx, dy);
+        const maxR = 40;
+        const clamped = Math.min(dist, maxR);
+        const angle = Math.atan2(dy, dx);
+        const tx = Math.cos(angle) * clamped;
+        const ty = Math.sin(angle) * clamped;
+        thumb.style.transform = `translate(${tx}px, ${ty}px)`;
+        this.joystick.x = tx / maxR;
+        this.joystick.y = ty / maxR;
+      };
+
+      zone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.joystick.touchId === null && e.changedTouches.length > 0) {
+          const t = e.changedTouches[0];
+          this.joystick.touchId = t.identifier;
+          this.joystick.active = true;
+          updateThumb(t);
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchmove', (e) => {
+        if (!this.joystick.active || this.joystick.touchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === this.joystick.touchId) {
+            updateThumb(t);
+            break;
+          }
+        }
+      }, { passive: false });
+
+      const onJoystickEnd = (e) => {
+        if (this.joystick.touchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === this.joystick.touchId) {
+            this.joystick.touchId = null;
+            this.joystick.active = false;
+            this.joystick.x = 0;
+            this.joystick.y = 0;
+            thumb.style.transform = 'translate(0px, 0px)';
+            break;
+          }
+        }
+      };
+
+      window.addEventListener('touchend', onJoystickEnd, { passive: true });
+      window.addEventListener('touchcancel', onJoystickEnd, { passive: true });
+    }
+
+    // B. Right-Screen Touch Camera Look (Swipe / Drag to Look around)
+    window.addEventListener('touchstart', (e) => {
+      const gameScreen = document.getElementById('game-screen');
+      if (!gameScreen || !gameScreen.classList.contains('active')) return;
+
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.target.closest('#touch-joystick-zone, .mobile-action-buttons, button, input, form, #modal-gameover, #role-briefing-modal')) {
+          continue;
+        }
+        if (this.lookTouch.id === null) {
+          this.lookTouch.id = t.identifier;
+          this.lookTouch.lastX = t.clientX;
+          this.lookTouch.lastY = t.clientY;
+          break;
+        }
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (this.lookTouch.id === null) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.identifier === this.lookTouch.id) {
+          const dx = t.clientX - this.lookTouch.lastX;
+          const dy = t.clientY - this.lookTouch.lastY;
+          this.lookTouch.lastX = t.clientX;
+          this.lookTouch.lastY = t.clientY;
+
+          const touchSens = 0.0055;
+          const multY = this.mouse.invertY ? -1 : 1;
+          this.localPlayer.rotY -= dx * touchSens;
+          this.localPlayer.pitch -= dy * touchSens * multY;
+          this.localPlayer.pitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, this.localPlayer.pitch));
+          break;
+        }
+      }
+    }, { passive: true });
+
+    const onLookEnd = (e) => {
+      if (this.lookTouch.id === null) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.identifier === this.lookTouch.id) {
+          this.lookTouch.id = null;
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('touchend', onLookEnd, { passive: true });
+    window.addEventListener('touchcancel', onLookEnd, { passive: true });
+
+    // C. Mobile Action Buttons
+    const shootBtn = document.getElementById('btn-touch-shoot');
+    const jumpBtn = document.getElementById('btn-touch-jump');
+    const freezeBtn = document.getElementById('btn-touch-freeze');
+    const tauntBtn = document.getElementById('btn-touch-taunt');
+    const chatToggle = document.getElementById('btn-mobile-chat-toggle');
+    const touchToggle = document.getElementById('btn-toggle-touch');
+
+    shootBtn?.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.localPlayer.role === 'hunter') {
+        this.fireHunterBlaster();
+      }
+    }, { passive: false });
+
+    shootBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (this.localPlayer.role === 'hunter') {
+        this.fireHunterBlaster();
+      }
+    });
+
+    const triggerJumpStart = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.keys.jump = true;
+    };
+    const triggerJumpEnd = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.keys.jump = false;
+    };
+
+    jumpBtn?.addEventListener('touchstart', triggerJumpStart, { passive: false });
+    jumpBtn?.addEventListener('touchend', triggerJumpEnd, { passive: false });
+    jumpBtn?.addEventListener('mousedown', triggerJumpStart);
+    jumpBtn?.addEventListener('mouseup', triggerJumpEnd);
+
+    freezeBtn?.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggleFreeze();
+    }, { passive: false });
+
+    freezeBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.toggleFreeze();
+    });
+
+    tauntBtn?.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.network && this.localPlayer.role === 'prop') {
+        window.network.emitTaunt('whistle');
+      }
+    }, { passive: false });
+
+    tauntBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.network && this.localPlayer.role === 'prop') {
+        window.network.emitTaunt('whistle');
+      }
+    });
+
+    chatToggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const chat = document.querySelector('.game-chat');
+      if (chat) chat.classList.toggle('mobile-open');
+    });
+
+    touchToggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.classList.toggle('has-touch-controls');
+      const isNowOn = document.body.classList.contains('has-touch-controls');
+      touchToggle.innerText = `Touch: ${isNowOn ? 'ON' : 'OFF'}`;
     });
   }
 
@@ -297,18 +518,27 @@ class GameEngine {
 
     const crosshairWrap = document.getElementById('crosshair-wrapper');
     const tauntPanel = document.getElementById('prop-taunt-panel');
+    const touchShootBtn = document.getElementById('btn-touch-shoot');
+    const touchFreezeBtn = document.getElementById('btn-touch-freeze');
+    const touchTauntBtn = document.getElementById('btn-touch-taunt');
 
     if (this.localPlayer.role === 'prop') {
       this.localPlayer.mesh = window.PropBuilder.createProp(this.localPlayer.propType);
       this.scene.add(this.localPlayer.mesh);
       if (crosshairWrap) crosshairWrap.classList.remove('active');
       if (tauntPanel) tauntPanel.style.display = 'flex';
+      if (touchShootBtn) touchShootBtn.style.display = 'none';
+      if (touchFreezeBtn) touchFreezeBtn.style.display = 'flex';
+      if (touchTauntBtn) touchTauntBtn.style.display = 'flex';
       this.removeFPVBlaster();
     } else if (this.localPlayer.role === 'hunter') {
       this.localPlayer.mesh = window.PropBuilder.createHunter();
       this.scene.add(this.localPlayer.mesh);
       if (crosshairWrap) crosshairWrap.classList.add('active');
       if (tauntPanel) tauntPanel.style.display = 'none';
+      if (touchShootBtn) touchShootBtn.style.display = 'flex';
+      if (touchFreezeBtn) touchFreezeBtn.style.display = 'none';
+      if (touchTauntBtn) touchTauntBtn.style.display = 'none';
       this.setupFPVBlaster();
     }
 
@@ -588,20 +818,28 @@ class GameEngine {
 
     const speed = (lp.role === 'hunter' ? 9.5 : 7.0) * delta;
 
-    // W = Forward, S = Backward, D = Right, A = Left
+    // W = Forward, S = Backward, D = Right, A = Left (Keyboard + Mobile Joystick)
     let forward = 0;
     if (this.keys.forward) forward += 1;
     if (this.keys.backward) forward -= 1;
+    if (this.joystick && this.joystick.active) {
+      // Joystick Y: up on screen is negative Y in touch coords, moving forward
+      forward -= this.joystick.y;
+    }
 
     let strafe = 0;
     if (this.keys.right) strafe += 1;
     if (this.keys.left) strafe -= 1;
+    if (this.joystick && this.joystick.active) {
+      strafe += this.joystick.x;
+    }
 
     if (forward !== 0 || strafe !== 0) {
-      // Normalize input so diagonal movement isn't faster
+      // Normalize input so diagonal movement isn't faster, but preserve analog intensity
       const len = Math.hypot(forward, strafe);
-      const normF = forward / len;
-      const normS = strafe / len;
+      const intensity = Math.min(1, len);
+      const normF = (forward / len) * intensity;
+      const normS = (strafe / len) * intensity;
 
       // Standard 3D orientation:
       // Looking down -Z when rotY = 0

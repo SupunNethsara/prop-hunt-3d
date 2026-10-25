@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Athal Prop Hunt 3D | Live Multiplayer Action</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -246,6 +246,46 @@
         <div id="hit-marker" class="hit-marker">✕</div>
       </div>
 
+      <!-- Mobile Touch Controls Layer (Touchscreen Devices & Tablets) -->
+      <div id="mobile-controls-layer" class="mobile-controls">
+        <!-- Virtual Movement Joystick (Bottom Left) -->
+        <div id="touch-joystick-zone" class="touch-joystick-zone">
+          <div id="touch-joystick-base" class="touch-joystick-base">
+            <div id="touch-joystick-thumb" class="touch-joystick-thumb"></div>
+          </div>
+        </div>
+
+        <!-- Mobile Action Buttons (Bottom Right) -->
+        <div class="mobile-action-buttons">
+          <!-- Hunter Shoot Button -->
+          <button id="btn-touch-shoot" class="mobile-action-btn btn-action-shoot" title="Shoot Blaster">
+            <span class="btn-icon">🎯</span>
+            <span class="btn-label">FIRE</span>
+          </button>
+
+          <!-- Prop Freeze / Lock Button -->
+          <button id="btn-touch-freeze" class="mobile-action-btn btn-action-freeze" title="Freeze Disguise">
+            <span class="btn-icon">🔒</span>
+            <span class="btn-label">LOCK</span>
+          </button>
+
+          <!-- Jump Button -->
+          <button id="btn-touch-jump" class="mobile-action-btn btn-action-jump" title="Jump">
+            <span class="btn-icon">🦘</span>
+            <span class="btn-label">JUMP</span>
+          </button>
+
+          <!-- Prop Quick Taunt Button -->
+          <button id="btn-touch-taunt" class="mobile-action-btn btn-action-taunt" title="Taunt Sound">
+            <span class="btn-icon">🗣️</span>
+            <span class="btn-label">TAUNT</span>
+          </button>
+        </div>
+
+        <!-- Mobile Floating Chat Toggle Button -->
+        <button id="btn-mobile-chat-toggle" class="btn-mobile-chat-toggle" title="Toggle Chat">💬</button>
+      </div>
+
       <!-- Bottom Right: Taunts & Key Bindings -->
       <div class="hud-bottom-right">
         <div id="prop-taunt-panel" class="taunt-wheel">
@@ -258,7 +298,10 @@
         </div>
         <div class="hud-instructions" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <span id="hud-instructions-text">WASD: Move | Space: Jump | <strong>F/L: Lock Prop</strong></span>
-          <button id="btn-toggle-inverty" class="btn-ghost" style="padding: 2px 8px; font-size: 10px; margin-left: 8px;">Invert Y: OFF</button>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <button id="btn-toggle-touch" class="btn-ghost" style="padding: 2px 8px; font-size: 10px;">Touch: Auto</button>
+            <button id="btn-toggle-inverty" class="btn-ghost" style="padding: 2px 8px; font-size: 10px;">Invert Y: OFF</button>
+          </div>
         </div>
       </div>
     </div>
