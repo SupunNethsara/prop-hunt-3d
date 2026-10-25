@@ -44,6 +44,10 @@ class GameEngine {
       invertY: false
     };
 
+    this.currentPhase = 'WAITING';
+    this.isHidingPhase = false;
+    this.fpvBlaster = null;
+
     this.raycaster = new THREE.Raycaster();
     this.hunterFlashlight = null;
 
@@ -243,17 +247,34 @@ class GameEngine {
       }
     });
 
-    // Mouse click for Hunter attacks
+    // Mouse click for shooting or prop feedback
     window.addEventListener('mousedown', (e) => {
-      if (e.button === 0 && this.mouse.isLocked) {
-        if (this.localPlayer.role === 'hunter') {
-          this.fireHunterBlaster();
-        }
+      if (e.button !== 0) return;
+      const gameScreen = document.getElementById('game-screen');
+      if (!gameScreen || !gameScreen.classList.contains('active')) return;
+
+      // Ignore clicks on UI elements (buttons, inputs, chat, modals)
+      if (e.target.closest('button, input, form, #modal-gameover, #role-briefing-modal')) {
+        return;
+      }
+
+      // If pointer is not locked yet, request lock for 3D look
+      if (!this.mouse.isLocked) {
+        try {
+          this.renderer.domElement.requestPointerLock();
+        } catch (err) {}
+      }
+
+      // Handle action based on role
+      if (this.localPlayer.role === 'hunter') {
+        this.fireHunterBlaster();
+      } else if (this.localPlayer.role === 'prop') {
+        this.showPropShootHint();
       }
     });
   }
 
-  // Set Local Player Profile & Role
+  // Set Local Player Profile, Spawn & Role
   setLocalPlayer(data) {
     this.localPlayer.id = data.id || this.localPlayer.id;
     this.localPlayer.username = data.username || this.localPlayer.username;
@@ -262,22 +283,115 @@ class GameEngine {
     this.localPlayer.health = data.health !== undefined ? data.health : 100;
     this.localPlayer.isFrozen = false;
 
+    if (data.x !== undefined) this.localPlayer.x = data.x;
+    if (data.y !== undefined) this.localPlayer.y = data.y;
+    if (data.z !== undefined) this.localPlayer.z = data.z;
+    if (data.rotY !== undefined) this.localPlayer.rotY = data.rotY;
+    this.localPlayer.vy = 0;
+
     // Rebuild local mesh
     if (this.localPlayer.mesh) {
       this.scene.remove(this.localPlayer.mesh);
       this.localPlayer.mesh = null;
     }
 
+    const crosshairWrap = document.getElementById('crosshair-wrapper');
+    const tauntPanel = document.getElementById('prop-taunt-panel');
+
     if (this.localPlayer.role === 'prop') {
       this.localPlayer.mesh = window.PropBuilder.createProp(this.localPlayer.propType);
       this.scene.add(this.localPlayer.mesh);
+      if (crosshairWrap) crosshairWrap.classList.remove('active');
+      if (tauntPanel) tauntPanel.style.display = 'flex';
+      this.removeFPVBlaster();
     } else if (this.localPlayer.role === 'hunter') {
-      // Hunter character
       this.localPlayer.mesh = window.PropBuilder.createHunter();
       this.scene.add(this.localPlayer.mesh);
+      if (crosshairWrap) crosshairWrap.classList.add('active');
+      if (tauntPanel) tauntPanel.style.display = 'none';
+      this.setupFPVBlaster();
     }
 
     this.updateHUD();
+  }
+
+  // First-Person Blaster Viewmodel for Hunter
+  setupFPVBlaster() {
+    if (this.fpvBlaster) return;
+    this.fpvBlaster = new THREE.Group();
+
+    // Gun body
+    const bodyGeo = new THREE.BoxGeometry(0.12, 0.14, 0.45);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x161c28, metalness: 0.8, roughness: 0.2 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+
+    // Gun barrel
+    const barrelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.3, 12);
+    const barrelMat = new THREE.MeshStandardMaterial({ color: 0x4a5568, metalness: 0.9, roughness: 0.1 });
+    const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.02, -0.25);
+
+    // Glowing Neon Rails
+    const railMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const railL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.35), railMat);
+    railL.position.set(-0.065, 0.03, -0.05);
+    const railR = railL.clone();
+    railR.position.x = 0.065;
+
+    // Holographic Scope
+    const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.08, 12), new THREE.MeshBasicMaterial({ color: 0xff0077 }));
+    scope.rotation.x = Math.PI / 2;
+    scope.position.set(0, 0.09, 0.02);
+
+    // Muzzle flash point
+    const muzzleGeo = new THREE.SphereGeometry(0.09, 12, 12);
+    const muzzleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0 });
+    const muzzle = new THREE.Mesh(muzzleGeo, muzzleMat);
+    muzzle.position.set(0, 0.02, -0.42);
+
+    this.fpvBlaster.add(body, barrel, railL, railR, scope, muzzle);
+    this.fpvBlaster.muzzle = muzzle;
+
+    this.fpvBlaster.position.set(0.3, -0.26, -0.6);
+    this.camera.add(this.fpvBlaster);
+    this.scene.add(this.camera);
+  }
+
+  removeFPVBlaster() {
+    if (this.fpvBlaster) {
+      this.camera.remove(this.fpvBlaster);
+      this.fpvBlaster = null;
+    }
+  }
+
+  animateBlasterFire() {
+    if (!this.fpvBlaster) return;
+    this.fpvBlaster.position.z = -0.52; // recoil kick
+    if (this.fpvBlaster.muzzle) {
+      this.fpvBlaster.muzzle.material.opacity = 0.9;
+    }
+    setTimeout(() => {
+      if (this.fpvBlaster) {
+        this.fpvBlaster.position.z = -0.6;
+        if (this.fpvBlaster.muzzle) {
+          this.fpvBlaster.muzzle.material.opacity = 0;
+        }
+      }
+    }, 80);
+  }
+
+  showHitMarker() {
+    const hm = document.getElementById('hit-marker');
+    if (hm) {
+      hm.classList.add('flash');
+      setTimeout(() => hm.classList.remove('flash'), 180);
+    }
+  }
+
+  showPropShootHint() {
+    window.soundFX.clickLocked();
+    window.showToast('You are a PROP! You cannot shoot — find a spot and press [F] to Freeze!', 'info', 'DISGUISED PROP');
   }
 
   // Update Remote Players from network
@@ -324,7 +438,14 @@ class GameEngine {
 
   // Hunter Shoots Scanner Blaster
   fireHunterBlaster() {
+    if (this.currentPhase === 'HIDING') {
+      window.soundFX.clickLocked();
+      window.showToast('🔒 Weapons locked during Hiding Phase! Wait for release countdown.', 'warning', 'LOCKDOWN');
+      return;
+    }
+
     window.soundFX.laser();
+    this.animateBlasterFire();
 
     // Raycast from camera center
     this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
@@ -336,36 +457,42 @@ class GameEngine {
 
     for (let i = 0; i < intersects.length; i++) {
       const hit = intersects[i];
-      if (hit.distance > 35) break; // range limit
+      if (hit.distance > 40) break; // range limit
 
-      // Check if hit object belongs to local player
+      // Check if hit object belongs to local player or fpv gun
+      if (this.fpvBlaster && (hit.object === this.fpvBlaster || this.fpvBlaster.children.includes(hit.object))) {
+        continue;
+      }
       if (this.localPlayer.mesh && (hit.object === this.localPlayer.mesh || this.localPlayer.mesh.children.includes(hit.object))) {
         continue;
       }
 
       hitPoint = hit.point;
 
-      // Find root parent group
-      let root = hit.object;
-      while (root.parent && root.parent !== this.scene) {
-        root = root.parent;
+      // Climb parent hierarchy to detect if object is a disguised player or static prop
+      let curr = hit.object;
+      while (curr && curr !== this.scene) {
+        if (curr.playerId && curr.isPlayerProp) {
+          hitPlayerId = curr.playerId;
+          break;
+        }
+        if (curr.isStaticProp) {
+          hitStaticProp = true;
+          break;
+        }
+        curr = curr.parent;
       }
 
-      if (root.playerId && root.isPlayerProp) {
-        hitPlayerId = root.playerId;
-        break;
-      } else if (root.isStaticProp) {
-        hitStaticProp = true;
-        break;
-      } else {
-        // Hit a wall/floor
+      if (hitPlayerId || hitStaticProp) {
         break;
       }
+      // Hit a wall, floor or boundary
+      break;
     }
 
     // Spawn Laser Tracer Beam
-    const origin = this.camera.position.clone().add(new THREE.Vector3(0.2, -0.2, 0).applyQuaternion(this.camera.quaternion));
-    const target = hitPoint || this.camera.position.clone().add(this.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(30));
+    const origin = this.camera.position.clone().add(new THREE.Vector3(0.25, -0.22, -0.4).applyQuaternion(this.camera.quaternion));
+    const target = hitPoint || this.camera.position.clone().add(this.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(35));
     this.createLaserBeam(origin, target);
 
     // Send to server
@@ -379,20 +506,38 @@ class GameEngine {
     }
 
     if (hitPlayerId) {
-      window.soundFX.hit();
+      window.soundFX.hitMarker();
+      this.showHitMarker();
       this.createHitSparks(target, 0x00ff88);
+      window.showToast('🎯 HIT! Disguised prop detected!', 'success', 'SCANNER HIT');
     } else if (hitStaticProp) {
       window.soundFX.misfire();
       this.createHitSparks(target, 0xff0055);
+      window.showToast('❌ Misfire! Shot an innocent inanimate object (-5 HP energy)', 'error', 'FALSE SCAN');
+    } else {
+      this.createHitSparks(target, 0x00f0ff);
     }
   }
 
   createLaserBeam(from, to) {
-    const geom = new THREE.BufferGeometry().setFromPoints([from, to]);
-    const mat = new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 3 });
-    const line = new THREE.Line(geom, mat);
-    this.scene.add(line);
-    setTimeout(() => this.scene.remove(line), 90);
+    const dist = from.distanceTo(to);
+    if (dist < 0.1) return;
+
+    // Glowing 3D Neon Laser Bolt Cylinder
+    const geom = new THREE.CylinderGeometry(0.045, 0.045, dist, 8);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.9 });
+    const cylinder = new THREE.Mesh(geom, mat);
+
+    // Position at midpoint and orient along ray direction
+    const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
+    cylinder.position.copy(mid);
+    const dir = new THREE.Vector3().subVectors(to, from).normalize();
+    cylinder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+
+    this.scene.add(cylinder);
+    setTimeout(() => {
+      this.scene.remove(cylinder);
+    }, 110);
   }
 
   createHitSparks(pos, colorHex) {
@@ -468,15 +613,23 @@ class GameEngine {
       const moveX = (fX * normF + rX * normS) * speed;
       const moveZ = (fZ * normF + rZ * normS) * speed;
 
-      const nextX = lp.x + moveX;
-      const nextZ = lp.z + moveZ;
+      const inCage = (lp.role === 'hunter' && this.isHidingPhase);
 
-      // Check collision with arena walls
-      if (!window.MapBuilder.checkCollision(nextX, lp.z)) {
-        lp.x = nextX;
-      }
-      if (!window.MapBuilder.checkCollision(lp.x, nextZ)) {
-        lp.z = nextZ;
+      if (inCage) {
+        // Confined inside suspended glass cage platform
+        lp.x = Math.max(-3.4, Math.min(3.4, lp.x + moveX));
+        lp.z = Math.max(-3.4, Math.min(3.4, lp.z + moveZ));
+      } else {
+        const nextX = lp.x + moveX;
+        const nextZ = lp.z + moveZ;
+
+        // Check collision with arena walls
+        if (!window.MapBuilder.checkCollision(nextX, lp.z)) {
+          lp.x = nextX;
+        }
+        if (!window.MapBuilder.checkCollision(lp.x, nextZ)) {
+          lp.z = nextZ;
+        }
       }
 
       // Prop model faces look direction
@@ -488,7 +641,7 @@ class GameEngine {
     lp.vy -= gravity;
     lp.y += lp.vy * delta;
 
-    const groundY = 0.0;
+    const groundY = (lp.role === 'hunter' && this.isHidingPhase) ? 14.2 : 0.0;
     if (lp.y <= groundY) {
       lp.y = groundY;
       lp.vy = 0;
@@ -511,6 +664,39 @@ class GameEngine {
         rotY: lp.rotY,
         isFrozen: lp.isFrozen
       });
+    }
+  }
+
+  // Called when transition from Hiding to Hunting happens
+  onHuntingPhaseStarted(data) {
+    this.currentPhase = 'HUNTING';
+    this.isHidingPhase = false;
+
+    if (this.localPlayer.role === 'hunter') {
+      if (data && data.hunterSpawn) {
+        this.localPlayer.x = data.hunterSpawn.x;
+        this.localPlayer.y = data.hunterSpawn.y;
+        this.localPlayer.z = data.hunterSpawn.z;
+        this.localPlayer.vy = 0;
+      }
+      this.showPhaseBanner('🎯 WEAPONS UNLOCKED! HUNT DOWN ALL PROPS! LEFT-CLICK TO SHOOT!', 'hunter');
+    } else {
+      this.showPhaseBanner('🚨 HUNTER HAS ENTERED THE ARENA! STAY FROZEN OR RUN!', 'prop');
+    }
+
+    this.updateHUD();
+  }
+
+  showPhaseBanner(text, type = 'hunter') {
+    const banner = document.getElementById('phase-announcement');
+    if (banner) {
+      banner.innerText = text;
+      banner.style.display = 'block';
+      banner.style.background = (type === 'hunter') ? 'rgba(0, 240, 255, 0.95)' : 'rgba(255, 0, 119, 0.95)';
+      banner.style.color = (type === 'hunter') ? '#000' : '#fff';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 4500);
     }
   }
 
@@ -559,10 +745,17 @@ class GameEngine {
     const healthBar = document.getElementById('hud-health-bar');
     const healthText = document.getElementById('hud-health-text');
     const propElem = document.getElementById('hud-prop-type');
+    const instElem = document.getElementById('hud-instructions-text');
+    const phaseHint = document.getElementById('hud-phase-hint');
 
     if (roleElem) {
-      roleElem.innerText = this.localPlayer.role.toUpperCase();
-      roleElem.className = this.localPlayer.role === 'hunter' ? 'role-hunter' : 'role-prop';
+      if (this.localPlayer.role === 'hunter') {
+        roleElem.innerText = '🕵️ ACE HUNTER (SEEKER)';
+        roleElem.className = 'role-badge role-hunter';
+      } else {
+        roleElem.innerText = `📦 PROP: ${this.localPlayer.propType.toUpperCase()}`;
+        roleElem.className = 'role-badge role-prop';
+      }
     }
 
     if (healthBar) {
@@ -573,7 +766,31 @@ class GameEngine {
     }
 
     if (propElem) {
-      propElem.innerText = this.localPlayer.role === 'prop' ? `Prop: ${this.localPlayer.propType}` : 'Role: Ace Hunter';
+      propElem.innerText = this.localPlayer.role === 'prop' ? `Disguise: ${this.localPlayer.propType}` : 'Weapon: Scanner Laser';
+    }
+
+    if (instElem) {
+      if (this.localPlayer.role === 'hunter') {
+        instElem.innerHTML = 'WASD: Move | Space: Jump | <strong style="color:var(--cyan);">Left-Click: 🎯 Shoot Blaster</strong> | Scan suspicious props!';
+      } else {
+        instElem.innerHTML = 'WASD: Move | Space: Jump | <strong style="color:var(--pink);">F/L: 🔒 Freeze/Lock Disguise</strong> | T: 🗣️ Taunt';
+      }
+    }
+
+    if (phaseHint) {
+      if (this.currentPhase === 'HIDING') {
+        if (this.localPlayer.role === 'hunter') {
+          phaseHint.innerText = '🔒 You are in observation cage! Props are scattering below...';
+        } else {
+          phaseHint.innerText = '🏃 RUN & HIDE! Press [F] to Freeze disguise before Hunter is released!';
+        }
+      } else if (this.currentPhase === 'HUNTING') {
+        if (this.localPlayer.role === 'hunter') {
+          phaseHint.innerText = '🔍 Roam the map! Left-Click to Shoot suspicious objects!';
+        } else {
+          phaseHint.innerText = '🤫 Stay still and survive! Press [T] to taunt for bonus score!';
+        }
+      }
     }
   }
 

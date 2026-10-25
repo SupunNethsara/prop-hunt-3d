@@ -126,7 +126,7 @@
 
       <!-- Disguise Prop Picker -->
       <div>
-        <label class="prop-picker-label">Choose your Secret Prop Disguise:</label>
+        <label class="prop-picker-label">Choose your Secret Prop Disguise (Used if assigned Prop):</label>
         <div class="prop-carousel">
           <button class="prop-selector-btn selected" data-prop="box">📦 Box</button>
           <button class="prop-selector-btn" data-prop="chair">🪑 Chair</button>
@@ -136,6 +136,24 @@
           <button class="prop-selector-btn" data-prop="watermelon">🍉 Watermelon</button>
           <button class="prop-selector-btn" data-prop="tire">🛞 Tire</button>
           <button class="prop-selector-btn" data-prop="toilet">🚽 Toilet</button>
+        </div>
+      </div>
+
+      <!-- Quick How to Play Guide -->
+      <div class="rules-summary-box">
+        <div class="rule-col">
+          <span class="rule-icon">🕵️</span>
+          <div>
+            <strong>1 Hunter (Seeker)</strong>
+            <p>Observes from sky cage for 25s while props hide. When released, roam arena & <strong>Left-Click to Shoot</strong> suspicious objects!</p>
+          </div>
+        </div>
+        <div class="rule-col">
+          <span class="rule-icon">📦</span>
+          <div>
+            <strong>Props (Hiders)</strong>
+            <p>Run, blend into the map, and press <strong>[F] to Freeze/Lock</strong>. Survive the round to WIN! (Props cannot shoot)</p>
+          </div>
         </div>
       </div>
 
@@ -159,6 +177,18 @@
       <p>(Or drag mouse to look / WASD to move)</p>
     </div>
 
+    <!-- Match Start: Role Briefing Splash Overlay -->
+    <div id="role-briefing-modal" class="role-briefing-overlay" style="display: none;">
+      <div class="briefing-card" id="briefing-card">
+        <div class="briefing-icon" id="briefing-icon">🕵️</div>
+        <div class="briefing-badge" id="briefing-badge">MISSION BRIEFING</div>
+        <h2 class="briefing-title" id="briefing-title">YOU ARE THE HUNTER</h2>
+        <p class="briefing-subtitle" id="briefing-subtitle">Find and eliminate all disguised props in the arena!</p>
+        <div class="briefing-steps" id="briefing-steps"></div>
+        <button id="btn-close-briefing" class="btn-neon" style="margin-top: 14px; width: 100%;">LET'S GO! 🚀</button>
+      </div>
+    </div>
+
     <!-- Phase Announcement Banner -->
     <div id="phase-announcement">🚨 HUNTER IS RELEASED! RUN & HIDE! 🚨</div>
 
@@ -167,17 +197,23 @@
       <!-- Exit Button -->
       <button id="btn-ingame-exit" class="btn-ghost" style="position: absolute; top: 20px; left: 20px; z-index: 20; font-size: 12px; padding: 8px 14px; pointer-events: auto;">🚪 Exit to Lobby</button>
 
-      <!-- Top Center: Timer & Phase -->
+      <!-- Top Center: Timer, Phase & Scoreboard -->
       <div class="hud-top">
         <div class="timer-box">
           <span id="hud-phase">HIDING PHASE ⏳</span>
           <span id="hud-timer">00:25</span>
+          <div id="hud-phase-hint" class="phase-hint">Props are hiding! Wait for release countdown...</div>
+        </div>
+        <div class="hud-score-pill">
+          <span id="hud-hunter-tag">🕵️ Hunter: <strong>Finding...</strong></span>
+          <span class="score-divider">|</span>
+          <span id="hud-props-alive-tag">📦 Alive Props: <strong id="hud-props-alive-count">0</strong></span>
         </div>
       </div>
 
       <!-- Top Right: Kill feed & announcements -->
-      <div id="kill-feed" style="position: absolute; top: 80px; right: 25px; display: flex; flex-direction: column; gap: 6px;"></div>
-      <div id="taunt-feed" style="position: absolute; top: 140px; right: 25px; background: rgba(245, 158, 11, 0.9); padding: 8px 16px; border-radius: 8px; font-weight: 700; color: #000; display: none;"></div>
+      <div id="kill-feed" style="position: absolute; top: 90px; right: 25px; display: flex; flex-direction: column; gap: 6px;"></div>
+      <div id="taunt-feed" style="position: absolute; top: 150px; right: 25px; background: rgba(245, 158, 11, 0.9); padding: 8px 16px; border-radius: 8px; font-weight: 700; color: #000; display: none;"></div>
 
       <!-- Bottom Left: Health, Role, Prop -->
       <div class="hud-bottom-left">
@@ -204,12 +240,15 @@
         </form>
       </div>
 
-      <!-- Hunter Crosshair (visible when role is hunter) -->
-      <div class="crosshair"></div>
+      <!-- Hunter Crosshair & Hitmarker (visible only for Hunter) -->
+      <div id="crosshair-wrapper" class="crosshair-wrapper">
+        <div class="crosshair"></div>
+        <div id="hit-marker" class="hit-marker">✕</div>
+      </div>
 
       <!-- Bottom Right: Taunts & Key Bindings -->
       <div class="hud-bottom-right">
-        <div class="taunt-wheel">
+        <div id="prop-taunt-panel" class="taunt-wheel">
           <span style="font-size: 11px; color: var(--text-muted); align-self: center;">Taunts:</span>
           <button class="taunt-btn" data-sound="whistle">🗣️ Whistle (T)</button>
           <button class="taunt-btn" data-sound="quack">🦆 Quack</button>
@@ -218,7 +257,7 @@
           <button class="taunt-btn" data-sound="laugh">😂 Laugh</button>
         </div>
         <div class="hud-instructions" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <span>WASD: Move | Space: Jump | <strong>F/L: Lock Prop</strong> | Click: Shoot</span>
+          <span id="hud-instructions-text">WASD: Move | Space: Jump | <strong>F/L: Lock Prop</strong></span>
           <button id="btn-toggle-inverty" class="btn-ghost" style="padding: 2px 8px; font-size: 10px; margin-left: 8px;">Invert Y: OFF</button>
         </div>
       </div>

@@ -187,11 +187,17 @@ class RoomManager {
       }
     });
 
-    // If only 1 player testing alone, allow them to explore as Prop or Hunter
+    // If only 1 player testing alone, allow them to test as Hunter with fast release
     if (playerIds.length === 1) {
       const p = room.players[playerIds[0]];
-      p.role = 'prop';
-      room.hunterId = null;
+      p.role = 'hunter';
+      p.x = SPAWN_HUNTER_CAGE.x;
+      p.y = SPAWN_HUNTER_CAGE.y;
+      p.z = SPAWN_HUNTER_CAGE.z;
+      room.hunterId = playerIds[0];
+      room.hidingDuration = 4; // Fast countdown for solo testing
+    } else {
+      room.hidingDuration = 25;
     }
 
     room.state = 'HIDING';
@@ -253,7 +259,12 @@ class RoomManager {
   hunterAttack(socket, data) {
     const roomId = this.playerRooms.get(socket.id);
     const room = this.rooms.get(roomId);
-    if (!room || room.state !== 'HUNTING') return;
+    if (!room) return;
+
+    if (room.state !== 'HUNTING') {
+      socket.emit('attack_rejected', { reason: 'Weapons locked during Hiding Phase! Wait for countdown.' });
+      return;
+    }
 
     const hunter = room.players[socket.id];
     if (!hunter || hunter.role !== 'hunter' || !hunter.isAlive) return;
@@ -299,13 +310,17 @@ class RoomManager {
       }
     } else if (data.hitStaticProp) {
       // Hunter shot a normal fake inanimate prop! Penalize 5 HP
-      hunter.health -= 5;
+      const isSolo = Object.keys(room.players).length <= 1;
+      const penalty = isSolo ? 0 : 5;
+      hunter.health = Math.max(isSolo ? 100 : 0, hunter.health - penalty);
+
       this.io.to(roomId).emit('hunter_misfire', {
         hunterId: hunter.socketId,
-        health: hunter.health
+        health: hunter.health,
+        isSolo
       });
 
-      if (hunter.health <= 0) {
+      if (hunter.health <= 0 && !isSolo) {
         hunter.health = 0;
         hunter.isAlive = false;
         this.endGame(room, 'props', 'The Hunter exhausted all scanner energy! Props survive and WIN!');
@@ -480,6 +495,10 @@ class RoomManager {
         displayName: p.displayName,
         role: p.role,
         propType: p.propType,
+        x: p.x,
+        y: p.y,
+        z: p.z,
+        rotY: p.rotY,
         isAlive: p.isAlive,
         health: p.health,
         score: p.score,

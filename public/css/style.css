@@ -684,14 +684,25 @@ body {
   color: var(--text-muted);
 }
 
-/* Hunter Crosshair */
-.crosshair {
+/* Hunter Crosshair & Hitmarker Container */
+.crosshair-wrapper {
+  display: none;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 14px;
-  height: 14px;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.crosshair-wrapper.active {
+  display: block;
+}
+
+.crosshair {
+  position: relative;
+  width: 18px;
+  height: 18px;
   pointer-events: none;
 }
 
@@ -700,20 +711,41 @@ body {
   content: '';
   position: absolute;
   background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
 }
 
 .crosshair::before {
-  top: 6px;
+  top: 8px;
   left: 0;
-  width: 14px;
+  width: 18px;
   height: 2px;
 }
 
 .crosshair::after {
   top: 0;
-  left: 6px;
+  left: 8px;
   width: 2px;
-  height: 14px;
+  height: 18px;
+}
+
+/* Hitmarker (flashes on successful prop hit) */
+.hit-marker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  color: #10b981;
+  font-size: 26px;
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.12s ease-out;
+  text-shadow: 0 0 10px #10b981;
+}
+
+.hit-marker.flash {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.2);
 }
 
 /* Click to play floating pill banner (Non-blocking) */
@@ -1046,4 +1078,192 @@ body {
 @keyframes progressShrink {
   from { width: 100%; }
   to { width: 0%; }
+}
+
+/* === Match Rules Summary in Waiting Room === */
+.rules-summary-box {
+  display: flex;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+
+.rule-col {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.rule-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.rule-col strong {
+  font-size: 13px;
+  color: #fff;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.rule-col p {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* === In-Game Phase Hint & Scoreboard Pill === */
+.phase-hint {
+  font-size: 11px;
+  color: #e2e8f0;
+  margin-top: 4px;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.hud-score-pill {
+  margin-top: 6px;
+  background: rgba(11, 15, 25, 0.85);
+  border: 1px solid var(--border);
+  padding: 5px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.hud-score-pill strong {
+  color: #fff;
+}
+
+.score-divider {
+  color: var(--border);
+  font-weight: 300;
+}
+
+/* === Match Start Role Briefing Overlay === */
+.role-briefing-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.briefing-card {
+  background: linear-gradient(145deg, #161f33, #0d1322);
+  border: 2px solid var(--cyan);
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.35);
+  border-radius: 18px;
+  padding: 28px 34px;
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+  color: #fff;
+  animation: scaleUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.briefing-card.role-prop-theme {
+  border-color: var(--pink);
+  box-shadow: 0 0 40px rgba(255, 0, 119, 0.35);
+}
+
+.briefing-icon {
+  font-size: 52px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+}
+
+.briefing-badge {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 800;
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--cyan);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.role-prop-theme .briefing-badge {
+  background: rgba(255, 0, 119, 0.2);
+  color: var(--pink);
+}
+
+.briefing-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+.briefing-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.briefing-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.briefing-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.briefing-step-num {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }

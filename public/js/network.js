@@ -71,6 +71,8 @@ class NetworkClient {
 
       const myData = (room.players || []).find(p => p.id === this.socket.id);
       if (myData && window.game) {
+        window.game.currentPhase = room.state || 'HIDING';
+        window.game.isHidingPhase = (room.state === 'HIDING');
         window.game.setLocalPlayer(myData);
       }
 
@@ -82,16 +84,27 @@ class NetworkClient {
           }
         });
       }
+
+      // Display high-impact Role Briefing modal
+      window.authUI.showRoleBriefing(myData, room);
+      window.authUI.updateScoreboard(room);
     });
 
     // Hunting Phase Started (Hunter released!)
     this.socket.on('hunting_phase_started', (data) => {
-      const banner = document.getElementById('phase-announcement');
-      if (banner) {
-        banner.innerText = '🚨 HUNTER IS RELEASED! RUN & HIDE! 🚨';
-        banner.style.display = 'block';
-        setTimeout(() => banner.style.display = 'none', 4000);
+      window.soundFX.siren();
+      if (window.game) {
+        window.game.onHuntingPhaseStarted(data);
       }
+      const phaseElem = document.getElementById('hud-phase');
+      if (phaseElem) phaseElem.innerText = 'HUNTING PHASE 🔍';
+      window.authUI.updateScoreboard(this.currentRoom);
+    });
+
+    // Weapon lock rejection notice
+    this.socket.on('attack_rejected', (data) => {
+      window.soundFX.clickLocked();
+      window.showToast(data.reason || 'Weapons locked during Hiding Phase!', 'warning', 'WEAPONS LOCKED');
     });
 
     // Timer tick
@@ -105,6 +118,11 @@ class NetworkClient {
       }
       if (phaseElem) {
         phaseElem.innerText = data.state === 'HIDING' ? 'HIDING PHASE ⏳' : 'HUNTING PHASE 🔍';
+      }
+      if (window.game) {
+        window.game.currentPhase = data.state;
+        window.game.isHidingPhase = (data.state === 'HIDING');
+        window.game.updateHUD();
       }
     });
 
@@ -166,6 +184,10 @@ class NetworkClient {
         msg.innerText = `💥 ${data.hunterName} blasted disguised prop ${data.targetName}!`;
         feed.appendChild(msg);
         setTimeout(() => msg.remove(), 4000);
+      }
+
+      if (window.authUI) {
+        window.authUI.decrementAliveProps();
       }
     });
 

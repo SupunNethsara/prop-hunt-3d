@@ -101,6 +101,12 @@ class AuthUI {
     document.querySelectorAll('.close-modal-btn').forEach(btn => {
       btn.addEventListener('click', () => this.closeModals());
     });
+
+    // Close role briefing splash
+    document.getElementById('btn-close-briefing')?.addEventListener('click', () => {
+      const modal = document.getElementById('role-briefing-modal');
+      if (modal) modal.style.display = 'none';
+    });
   }
 
   switchAuthTab(tab) {
@@ -363,6 +369,108 @@ class AuthUI {
     // Initialize 3D Engine if not already
     if (!window.game) {
       window.game = new window.GameEngine();
+    }
+  }
+
+  // Role Briefing Splash (Shown at match start)
+  showRoleBriefing(player, room) {
+    const modal = document.getElementById('role-briefing-modal');
+    const card = document.getElementById('briefing-card');
+    const icon = document.getElementById('briefing-icon');
+    const badge = document.getElementById('briefing-badge');
+    const title = document.getElementById('briefing-title');
+    const subtitle = document.getElementById('briefing-subtitle');
+    const steps = document.getElementById('briefing-steps');
+
+    if (!modal || !player) return;
+
+    const isHunter = (player.role === 'hunter');
+
+    if (isHunter) {
+      if (card) card.className = 'briefing-card';
+      if (icon) icon.innerText = '🕵️';
+      if (badge) badge.innerText = 'ROLE: ACE HUNTER (SEEKER)';
+      if (title) title.innerText = 'YOU ARE THE HUNTER!';
+      if (subtitle) subtitle.innerText = 'Your objective: Find and eliminate all sneaky props hidden in the arena!';
+      if (steps) {
+        steps.innerHTML = `
+          <div class="briefing-step-item">
+            <span class="briefing-step-num">1</span>
+            <span><strong>Hiding Phase (25s):</strong> You are in the observation cage. Look down as props scramble to hide!</span>
+          </div>
+          <div class="briefing-step-item">
+            <span class="briefing-step-num">2</span>
+            <span><strong>Hunting Phase (120s):</strong> You are released! Roam arena & <strong>LEFT-CLICK to shoot</strong> suspicious objects!</span>
+          </div>
+          <div class="briefing-step-item">
+            <span class="briefing-step-num">3</span>
+            <span><strong>Warning:</strong> Shooting innocent static props costs <strong>-5 HP</strong> scanner energy!</span>
+          </div>
+        `;
+      }
+    } else {
+      const propEmojis = { box: '📦', chair: '🪑', plant: '🪴', barrel: '🛢️', trash: '🗑️', watermelon: '🍉', tire: '🛞', toilet: '🚽' };
+      const propType = player.propType || 'box';
+      const propIcon = propEmojis[propType] || '📦';
+
+      if (card) card.className = 'briefing-card role-prop-theme';
+      if (icon) icon.innerText = propIcon;
+      if (badge) badge.innerText = `ROLE: DISGUISED PROP (${propType.toUpperCase()})`;
+      if (title) title.innerText = 'YOU ARE A SNEAKY PROP!';
+      if (subtitle) subtitle.innerText = `Disguised as a ${propType.toUpperCase()}. Blend in with surroundings and survive!`;
+      if (steps) {
+        steps.innerHTML = `
+          <div class="briefing-step-item">
+            <span class="briefing-step-num">1</span>
+            <span><strong>Run & Hide (25s):</strong> Find a smart spot before the Hunter is released from the sky cage!</span>
+          </div>
+          <div class="briefing-step-item">
+            <span class="briefing-step-num">2</span>
+            <span><strong>Freeze Disguise:</strong> Press <strong>[F] or [L] to Lock/Freeze</strong> your prop so you look inanimate!</span>
+          </div>
+          <div class="briefing-step-item">
+            <span class="briefing-step-num">3</span>
+            <span><strong>Taunt (T):</strong> Press <strong>[T]</strong> to make funny sounds and earn bonus score!</span>
+          </div>
+          <div class="briefing-step-item">
+            <span class="briefing-step-num">4</span>
+            <span><strong>Notice:</strong> Props cannot shoot — stealth and survival is your only goal!</span>
+          </div>
+        `;
+      }
+    }
+
+    modal.style.display = 'flex';
+
+    // Auto-dismiss after 5 seconds
+    if (this.briefingTimer) clearTimeout(this.briefingTimer);
+    this.briefingTimer = setTimeout(() => {
+      modal.style.display = 'none';
+    }, 5500);
+  }
+
+  // Update in-game top scoreboard
+  updateScoreboard(room) {
+    if (!room) return;
+    const hunterTag = document.getElementById('hud-hunter-tag');
+    const alivePropsTag = document.getElementById('hud-props-alive-count');
+
+    const hunter = (room.players || []).find(p => p.role === 'hunter' || p.id === room.hunterId);
+    if (hunterTag) {
+      hunterTag.innerHTML = `🕵️ Hunter: <strong>${hunter ? hunter.displayName : 'Assigning...'}</strong>`;
+    }
+
+    const aliveProps = (room.players || []).filter(p => p.role === 'prop' && p.isAlive !== false).length;
+    if (alivePropsTag) {
+      alivePropsTag.innerText = aliveProps;
+    }
+  }
+
+  decrementAliveProps() {
+    const alivePropsTag = document.getElementById('hud-props-alive-count');
+    if (alivePropsTag) {
+      const cur = parseInt(alivePropsTag.innerText, 10) || 1;
+      alivePropsTag.innerText = Math.max(0, cur - 1);
     }
   }
 
