@@ -60,46 +60,77 @@ class GameEngine {
   }
 
   init() {
-    // 1. Scene with atmospheric twilight sky & depth fog
+    const GFX = window.GFX;
+    const Q = GFX.quality;
+    const lin = hex => GFX.lin(hex);
+
+    // 1. Scene: dusk sky dome with fog matched to the horizon colour.
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0c111e);
-    this.scene.fog = new THREE.FogExp2(0x0c111e, 0.012);
+    const fogHex = 0x2a2338;
+    this.scene.background = new THREE.Color(fogHex); // seen only if the sky dome fails
+    this.scene.fog = new THREE.FogExp2(lin(fogHex), 0.011);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
     this.camera.position.set(0, 2, 5);
 
-    // 3. Renderer
+    // 3. Renderer: sRGB output, filmic tone mapping, physical light units.
+    // Quality tier (graphics.js) caps pixel ratio and shadow cost on phones.
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Q.pixelRatio);
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.physicallyCorrectLights = true;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = Q.softShadows ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     this.container.appendChild(this.renderer.domElement);
+    GFX.setRenderer(this.renderer);
+    GFX.addVignette(this.container);
 
-    // 4. Lighting - Bright & Colorful Arcade Feel
-    const ambient = new THREE.AmbientLight(0x8ba2c4, 1.1);
-    this.scene.add(ambient);
+    this.sky = GFX.createSky(150);
+    if (this.sky) this.scene.add(this.sky);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    dirLight.position.set(20, 45, 20);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    this.scene.add(dirLight);
+    // Image-based lighting from a hand-built room; null means "lights only".
+    const env = GFX.buildEnvironment(this.renderer);
+    if (env) this.scene.environment = env;
 
-    // Hemispheric light for beautiful sky-ground bounce
-    const hemiLight = new THREE.HemisphereLight(0x3a506b, 0x1c2541, 0.8);
+    // 4. Lighting (physical units). Warm low key light, cool sky fill, and
+    // the neon point lights with inverse-square falloff.
+    const hemiLight = new THREE.HemisphereLight(lin(0x9fb4e6), lin(0x2a2230), env ? 0.8 : 1.6);
     this.scene.add(hemiLight);
 
-    // Atmospheric neon colored point lights
-    const p1 = new THREE.PointLight(0x00f0ff, 1.5, 30);
-    p1.position.set(-15, 4, -15);
-    const p2 = new THREE.PointLight(0xff0077, 1.5, 30);
-    p2.position.set(15, 4, 15);
-    const p3 = new THREE.PointLight(0xffea00, 1.2, 30);
+    const dirLight = new THREE.DirectionalLight(lin(0xffc58f), 3.0);
+    dirLight.position.copy(GFX.sunDirection).multiplyScalar(70);
+    dirLight.target.position.set(0, 0, 0);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = Q.shadowMapSize;
+    dirLight.shadow.mapSize.height = Q.shadowMapSize;
+    dirLight.shadow.bias = -0.0004;
+    if ('normalBias' in dirLight.shadow) dirLight.shadow.normalBias = 0.04;
+    this.scene.add(dirLight, dirLight.target);
+    // Cover the whole 60 x 60 m arena (walls up to 4.8 m, lamp cords to 4.9 m).
+    GFX.fitShadowCamera(dirLight, new THREE.Box3(new THREE.Vector3(-31, 0, -31), new THREE.Vector3(31, 5, 31)));
+    this.keyLight = dirLight;
+
+    // Neon pendants sit just under their bulbs (map.js lamps at y = 3.0).
+    const p1 = new THREE.PointLight(lin(0x00f0ff), 40, 26, 2);
+    p1.position.set(-15, 2.8, -15);
+    const p2 = new THREE.PointLight(lin(0xff0077), 40, 26, 2);
+    p2.position.set(15, 2.8, 15);
+    const p3 = new THREE.PointLight(lin(0xffea00), 22, 22, 2);
     p3.position.set(0, 4, 0);
     this.scene.add(p1, p2, p3);
+
+    if (Q.extraLights) {
+      // Warm tungsten pendants in the other two quadrants (desktop tier only).
+      [[15, -15], [-15, 15]].forEach(([x, z]) => {
+        const l = new THREE.PointLight(lin(0xffc27a), 22, 14, 2);
+        l.position.set(x, 2.8, z);
+        this.scene.add(l);
+      });
+    }
 
     // 5. Build Map
     window.MapBuilder.buildMap(this.scene);
@@ -550,37 +581,69 @@ class GameEngine {
     if (this.fpvBlaster) return;
     this.fpvBlaster = new THREE.Group();
 
-    // Gun body
-    const bodyGeo = new THREE.BoxGeometry(0.12, 0.14, 0.45);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x161c28, metalness: 0.8, roughness: 0.2 });
+    const GFX = window.GFX;
+    const lin = hex => GFX.lin(hex);
+    let metalSet = null;
+    try { metalSet = window.TextureGenerator.getSet('metal'); } catch (e) { metalSet = null; }
+
+    // Gun body: bevelled gunmetal that picks up environment reflections.
+    const bodyGeo = GFX.roundedBox(0.12, 0.14, 0.45, 0.018, 2);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: lin(0x2a3240), metalness: 0.85, roughness: metalSet ? 1.0 : 0.35,
+      roughnessMap: metalSet ? metalSet.roughnessMap : null,
+      normalMap: metalSet ? metalSet.normalMap : null,
+      normalScale: new THREE.Vector2(0.4, 0.4)
+    });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
 
     // Gun barrel
-    const barrelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.3, 12);
-    const barrelMat = new THREE.MeshStandardMaterial({ color: 0x4a5568, metalness: 0.9, roughness: 0.1 });
+    const barrelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.3, 20);
+    const barrelMat = new THREE.MeshStandardMaterial({ color: lin(0x8a93a3), metalness: 1, roughness: 0.25 });
     const barrel = new THREE.Mesh(barrelGeo, barrelMat);
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0.02, -0.25);
 
     // Glowing Neon Rails
-    const railMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: lin(0x00f0ff), emissiveIntensity: 3 });
     const railL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.35), railMat);
     railL.position.set(-0.065, 0.03, -0.05);
     const railR = railL.clone();
     railR.position.x = 0.065;
 
     // Holographic Scope
-    const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.08, 12), new THREE.MeshBasicMaterial({ color: 0xff0077 }));
+    const scope = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 0.08, 20),
+      new THREE.MeshStandardMaterial({ color: lin(0x1a0610), emissive: lin(0xff0077), emissiveIntensity: 2.5, roughness: 0.2 })
+    );
     scope.rotation.x = Math.PI / 2;
     scope.position.set(0, 0.09, 0.02);
 
-    // Muzzle flash point
+    // Muzzle flash point (opacity is animated in animateBlasterFire)
     const muzzleGeo = new THREE.SphereGeometry(0.09, 12, 12);
-    const muzzleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0 });
+    const muzzleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0, toneMapped: false, blending: THREE.AdditiveBlending, depthWrite: false });
     const muzzle = new THREE.Mesh(muzzleGeo, muzzleMat);
     muzzle.position.set(0, 0.02, -0.42);
 
-    this.fpvBlaster.add(body, barrel, railL, railR, scope, muzzle);
+    // Grip, barrel shroud fins and an energy cell (decorative, never raycast).
+    const gripMat = new THREE.MeshStandardMaterial({ color: lin(0x14161b), roughness: 0.7, metalness: 0 });
+    const grip = GFX.noRaycast(new THREE.Mesh(GFX.roundedBox(0.07, 0.16, 0.09, 0.02, 1), gripMat));
+    grip.position.set(0, -0.12, 0.12);
+    grip.rotation.x = -0.25;
+    const fins = [];
+    for (let i = 0; i < 4; i++) {
+      const fin = GFX.noRaycast(new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.012, 20), barrelMat));
+      fin.rotation.x = Math.PI / 2;
+      fin.position.set(0, 0.02, -0.18 - i * 0.035);
+      fins.push(fin);
+    }
+    const cell = GFX.noRaycast(new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.022, 0.12, 16),
+      new THREE.MeshStandardMaterial({ color: 0x000000, emissive: lin(0x00f0ff), emissiveIntensity: 1.5 })
+    ));
+    cell.rotation.z = Math.PI / 2;
+    cell.position.set(0, -0.05, 0.1);
+
+    this.fpvBlaster.add(body, barrel, railL, railR, scope, muzzle, grip, cell, ...fins);
     this.fpvBlaster.muzzle = muzzle;
 
     this.fpvBlaster.position.set(0.3, -0.26, -0.6);
@@ -755,7 +818,7 @@ class GameEngine {
 
     // Glowing 3D Neon Laser Bolt Cylinder
     const geom = new THREE.CylinderGeometry(0.045, 0.045, dist, 8);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.9 });
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.9, toneMapped: false, blending: THREE.AdditiveBlending, depthWrite: false });
     const cylinder = new THREE.Mesh(geom, mat);
 
     // Position at midpoint and orient along ray direction
@@ -778,7 +841,7 @@ class GameEngine {
       positions.push(pos.x, pos.y, pos.z);
     }
     geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.15 });
+    const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.15, toneMapped: false });
     const points = new THREE.Points(geom, mat);
     this.scene.add(points);
     setTimeout(() => this.scene.remove(points), 250);
@@ -787,7 +850,7 @@ class GameEngine {
   // Create Visual 3D Expanding Taunt Wave
   createTauntRipple(x, y, z) {
     const geo = new THREE.RingGeometry(0.2, 0.4, 24);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide, transparent: true, opacity: 0.8, toneMapped: false });
     const ring = new THREE.Mesh(geo, mat);
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(x, y + 0.1, z);
@@ -1040,6 +1103,7 @@ class GameEngine {
     this.updateCamera();
     this.updateRemotePlayers(delta);
 
+    if (this.sky) this.sky.position.copy(this.camera.position);
     this.renderer.render(this.scene, this.camera);
   }
 }
