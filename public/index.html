@@ -3,28 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070a12">
   <title>Athal Prop Hunt 3D | Live Multiplayer Action</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
+  <!-- Inline SVG icon sprite (no network requests) -->
+  <svg class="icon-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <symbol id="i-logo" viewBox="0 0 32 32"><path d="M16 3 28 9.5v13L16 29 4 22.5v-13Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 9.5 16 16l12-6.5M16 16v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="16" r="3.2" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v6a4 4 0 0 1-8 0Z"/><path d="M16 6h3v1.5A3.5 3.5 0 0 1 15.5 11M8 6H5v1.5A3.5 3.5 0 0 0 8.5 11M12 14v4M8.5 21h7M9.5 18h5"/></symbol>
+      <symbol id="i-podium" viewBox="0 0 24 24"><path d="M3 20h18M9 20V9h6v11M3 20v-6h6M15 20v-8h6v8"/></symbol>
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7Z"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-enter" viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M14 16l4-4-4-4M18 12H8"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5Z"/></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7Z"/><path d="M3.5 7 12 11.5 20.5 7M12 11.5v10"/></symbol>
+      <symbol id="i-door" viewBox="0 0 24 24"><path d="M4 21h16M6 21V4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21"/><circle cx="14.5" cy="12.5" r="1" fill="currentColor"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 18.5 3.5 21l.6-4A8 8 0 1 1 8 19.5Z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></symbol>
+      <symbol id="i-jump" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6M5 21h14"/></symbol>
+      <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h3l7 4V5L8 9H5a1 1 0 0 0-1 1Z"/><path d="M18.5 9a4 4 0 0 1 0 6M8 15l1 5"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7M6 9.5V20h12V9.5M10 20v-5h4v5"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8S10.5 3.5 8 4.5 9 8 12 8Zm0 0s1.5-4.5 4-3.5S15 8 12 8Z"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></symbol>
+      <symbol id="i-mask" viewBox="0 0 24 24"><path d="M3 7c3-1.5 6-1.5 9 0 3-1.5 6-1.5 9 0 0 6-3 10-6 10-1.5 0-2.3-1.5-3-3-.7 1.5-1.5 3-3 3-3 0-6-4-6-10Z"/><path d="M7 10.5h2.5M14.5 10.5H17"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Animated backdrop, visible until the 3D arena is created -->
+  <div class="app-backdrop" aria-hidden="true">
+    <div class="backdrop-glow glow-a"></div>
+    <div class="backdrop-glow glow-b"></div>
+    <div class="backdrop-glow glow-c"></div>
+    <div class="backdrop-grid"></div>
+  </div>
+
   <!-- Top Navigation Bar -->
-  <nav class="top-nav">
+  <nav class="top-nav" aria-label="Main">
     <div class="brand">
-      <div class="brand-logo">📦🕵️</div>
+      <div class="brand-logo" aria-hidden="true"><svg class="icon"><use href="#i-logo"/></svg></div>
       <div class="brand-text">
-        <h1>ATHAL PROP HUNT 3D</h1>
-        <span>MULTIPLAYER LIVE ACTION & AI REWARDS</span>
+        <h1>ATHAL PROP HUNT <em>3D</em></h1>
+        <span>Multiplayer live action &amp; AI rewards</span>
       </div>
     </div>
     <div class="nav-actions">
       <div class="user-pill">
-        <span>👤</span>
+        <span class="user-avatar" aria-hidden="true"><svg class="icon"><use href="#i-user"/></svg></span>
         <span id="user-bar-name">Guest</span>
       </div>
-      <button id="btn-show-vault" class="btn-ghost">🏆 Agent Vault (Gifts)</button>
-      <button id="btn-show-leaderboard" class="btn-ghost">🥇 Leaderboard</button>
-      <button id="btn-logout" class="btn-ghost">Logout</button>
+      <button id="btn-show-vault" class="btn-ghost nav-btn" aria-label="Agent Vault (Gifts)"><svg class="icon" aria-hidden="true"><use href="#i-trophy"/></svg><span class="nav-btn-text">Agent Vault</span></button>
+      <button id="btn-show-leaderboard" class="btn-ghost nav-btn" aria-label="Leaderboard"><svg class="icon" aria-hidden="true"><use href="#i-podium"/></svg><span class="nav-btn-text">Leaderboard</span></button>
+      <button id="btn-logout" class="btn-ghost nav-btn" aria-label="Logout"><svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg><span class="nav-btn-text">Logout</span></button>
     </div>
   </nav>
 
@@ -32,70 +73,114 @@
   <div id="game-canvas-container"></div>
 
   <!-- 1. AUTH MODAL (Login / Register / Guest) -->
-  <div id="auth-modal" class="app-modal">
-    <div class="modal-box">
-      <div class="brand" style="justify-content: center; margin-bottom: 10px;">
-        <span style="font-size: 36px;">📦✨</span>
-        <div class="brand-text">
-          <h1>PROP HUNT 3D</h1>
-          <span>ENTER THE ARENA</span>
+  <div id="auth-modal" class="app-modal entry-screen">
+    <div class="entry-layout">
+      <section class="entry-hero" aria-labelledby="entry-title">
+        <div class="entry-kicker"><span class="live-dot"></span> Live multiplayer arena</div>
+        <h1 id="entry-title" class="entry-title">PROP <span>HUNT</span> <em>3D</em></h1>
+        <p class="entry-tagline">Disguise yourself as anything in the arena, or hunt down the agents who did. Last prop standing takes the trophy.</p>
+        <ul class="entry-features">
+          <li><span class="feat-icon feat-cyan"><svg class="icon"><use href="#i-box"/></svg></span><div><strong>Hide as a prop</strong><span>Blend in, lock your disguise, taunt the hunter.</span></div></li>
+          <li><span class="feat-icon feat-pink"><svg class="icon"><use href="#i-target"/></svg></span><div><strong>Hunt them down</strong><span>Scan the arena and blast anything that moves.</span></div></li>
+          <li><span class="feat-icon feat-amber"><svg class="icon"><use href="#i-gift"/></svg></span><div><strong>Win AI trophies</strong><span>Every victory unlocks a one-of-a-kind badge.</span></div></li>
+        </ul>
+      </section>
+
+      <div class="modal-box entry-card">
+        <div class="entry-card-head">
+          <div class="brand-logo brand-logo-lg" aria-hidden="true"><svg class="icon"><use href="#i-logo"/></svg></div>
+          <div>
+            <h2>Enter the arena</h2>
+            <p>Sign in to keep your trophies and stats.</p>
+          </div>
         </div>
+
+        <div class="auth-tabs">
+          <button id="btn-tab-login" type="button" class="tab-btn active">Login</button>
+          <button id="btn-tab-register" type="button" class="tab-btn">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="form-login" class="auth-form">
+          <label class="field">
+            <span class="field-label">Username</span>
+            <span class="field-control">
+              <svg class="icon field-icon" aria-hidden="true"><use href="#i-user"/></svg>
+              <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">Password</span>
+            <span class="field-control">
+              <svg class="icon field-icon" aria-hidden="true"><use href="#i-lock"/></svg>
+              <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+            </span>
+          </label>
+          <button type="submit" class="btn-neon btn-block">SIGN IN</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="form-register" class="auth-form" style="display: none;">
+          <label class="field">
+            <span class="field-label">Username</span>
+            <span class="field-control">
+              <svg class="icon field-icon" aria-hidden="true"><use href="#i-user"/></svg>
+              <input type="text" id="reg-username" placeholder="Pick a Username" required autocomplete="username">
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">Password</span>
+            <span class="field-control">
+              <svg class="icon field-icon" aria-hidden="true"><use href="#i-lock"/></svg>
+              <input type="password" id="reg-password" placeholder="Password (min 4 chars)" required autocomplete="new-password">
+            </span>
+          </label>
+          <button type="submit" class="btn-neon-pink btn-block">CREATE ACCOUNT</button>
+        </form>
+
+        <div class="divider-or"><span>OR</span></div>
+        <button id="btn-guest-play" type="button" class="btn-ghost btn-block btn-guest"><svg class="icon" aria-hidden="true"><use href="#i-bolt"/></svg> Quick Guest Play <small>Instant</small></button>
       </div>
-
-      <div class="auth-tabs">
-        <button id="btn-tab-login" class="tab-btn active">Login</button>
-        <button id="btn-tab-register" class="tab-btn">Register</button>
-      </div>
-
-      <!-- Login Form -->
-      <form id="form-login" class="auth-form">
-        <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
-        <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
-        <button type="submit" class="btn-neon">SIGN IN</button>
-      </form>
-
-      <!-- Register Form -->
-      <form id="form-register" class="auth-form" style="display: none;">
-        <input type="text" id="reg-username" placeholder="Pick a Username" required>
-        <input type="password" id="reg-password" placeholder="Password (min 4 chars)" required>
-        <button type="submit" class="btn-neon-pink">CREATE ACCOUNT</button>
-      </form>
-
-      <div style="text-align: center; color: var(--text-muted); font-size: 13px;">OR</div>
-      <button id="btn-guest-play" class="btn-ghost" style="width: 100%;">⚡ Quick Guest Play (Instant)</button>
     </div>
   </div>
 
   <!-- 2. LOBBY SCREEN -->
   <div id="lobby-screen" class="screen">
+    <div class="screen-head">
+      <div class="eyebrow">Mission control</div>
+      <h2 class="screen-title">Pick your arena</h2>
+    </div>
     <div class="lobby-layout">
       <!-- Create & Join panel -->
-      <div class="card-panel">
-        <h3>🚀 PLAY NOW</h3>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <label style="font-size: 13px; color: var(--text-muted);">Create Custom Room:</label>
-          <input type="text" id="input-room-name" placeholder="Room Name (e.g. SL Athal Squad)" class="auth-form input" style="padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color:#fff; border-radius:8px;">
-          <button id="btn-create-room" class="btn-neon">CREATE ROOM</button>
+      <div class="card-panel panel-enter">
+        <h3><span class="h-icon h-icon-cyan"><svg class="icon"><use href="#i-play"/></svg></span> PLAY NOW</h3>
+        <div class="field-group">
+          <label class="field-label" for="input-room-name">Create a custom room</label>
+          <input type="text" id="input-room-name" class="text-input" placeholder="Room Name (e.g. SL Athal Squad)">
+          <button id="btn-create-room" class="btn-neon btn-block"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg> CREATE ROOM</button>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-          <label style="font-size: 13px; color: var(--text-muted);">Join with Room Code:</label>
-          <div style="display: flex; gap: 8px;">
-            <input type="text" id="input-join-code" placeholder="ATHAL-123" style="flex:1; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color:#fff; border-radius:8px; text-transform: uppercase;">
-            <button id="btn-join-code" class="btn-ghost">JOIN</button>
+        <div class="divider-or"><span>OR JOIN</span></div>
+
+        <div class="field-group">
+          <label class="field-label" for="input-join-code">Join with a room code</label>
+          <div class="input-row">
+            <input type="text" id="input-join-code" class="text-input code-input" placeholder="ATHAL-123">
+            <button id="btn-join-code" class="btn-ghost"><svg class="icon" aria-hidden="true"><use href="#i-enter"/></svg> JOIN</button>
           </div>
         </div>
 
-        <div style="margin-top: 20px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-          🎁 <strong>Winner Rewards:</strong> Every match victory unlocks an exclusive AI-Generated Secret Agent Trophy & Avatar via Free Pollinations API!
+        <div class="reward-note">
+          <span class="h-icon h-icon-amber"><svg class="icon"><use href="#i-gift"/></svg></span>
+          <p><strong>Winner rewards:</strong> every match victory unlocks an exclusive AI-generated Secret Agent trophy &amp; avatar via the free Pollinations API.</p>
         </div>
       </div>
 
       <!-- Active Rooms browser -->
-      <div class="card-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-          <h3 style="border-bottom: none; padding-bottom: 0;">🌐 LIVE PUBLIC ROOMS</h3>
-          <button id="btn-refresh-rooms" class="btn-ghost" style="padding: 4px 10px; font-size: 11px;">🔄 Refresh</button>
+      <div class="card-panel panel-enter panel-enter-2">
+        <div class="panel-head">
+          <h3><span class="h-icon h-icon-pink"><svg class="icon"><use href="#i-globe"/></svg></span> LIVE PUBLIC ROOMS</h3>
+          <button id="btn-refresh-rooms" class="btn-ghost btn-sm"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg> Refresh</button>
         </div>
         <div id="lobby-rooms-list" class="rooms-grid">
           <div class="empty-lobby">Loading active rooms...</div>
@@ -106,50 +191,51 @@
 
   <!-- 3. ROOM WAITING SCREEN -->
   <div id="room-screen" class="screen">
-    <div class="room-waiting-container">
+    <div class="room-waiting-container panel-enter">
       <div class="room-waiting-header">
         <div>
-          <h2 style="font-size: 20px;">LOBBY ROOM</h2>
-          <span style="font-size: 12px; color: var(--text-muted);">Share this room code with friends:</span>
+          <div class="eyebrow">Lobby room</div>
+          <h2 class="screen-title screen-title-sm">Squad up</h2>
+          <span class="muted-sm">Share this room code with friends</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="room-code-wrap">
           <div id="room-title-code" class="room-code-tag">ATHAL-00</div>
-          <button id="btn-copy-invite" class="btn-neon-small" style="margin-top: 0; padding: 8px 14px; font-size: 12px;">📋 Copy Link</button>
+          <button id="btn-copy-invite" class="btn-neon-small"><svg class="icon" aria-hidden="true"><use href="#i-link"/></svg> Copy Link</button>
         </div>
       </div>
 
       <!-- Players in Room -->
-      <div>
-        <label style="font-size: 13px; color: var(--text-muted); margin-bottom: 6px; display: block;">Agents in Room:</label>
+      <div class="room-section">
+        <div class="section-label"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg> Agents in room</div>
         <div id="room-players-list" class="players-list-box"></div>
       </div>
 
       <!-- Disguise Prop Picker -->
-      <div>
-        <label class="prop-picker-label">Choose your Secret Prop Disguise (Used if assigned Prop):</label>
+      <div class="room-section">
+        <div class="section-label prop-picker-label"><svg class="icon" aria-hidden="true"><use href="#i-mask"/></svg> Choose your secret prop disguise <small>(used if you are assigned Prop)</small></div>
         <div class="prop-carousel">
-          <button class="prop-selector-btn selected" data-prop="box">📦 Box</button>
-          <button class="prop-selector-btn" data-prop="chair">🪑 Chair</button>
-          <button class="prop-selector-btn" data-prop="plant">🪴 Plant</button>
-          <button class="prop-selector-btn" data-prop="barrel">🛢️ Barrel</button>
-          <button class="prop-selector-btn" data-prop="trash">🗑️ Trash</button>
-          <button class="prop-selector-btn" data-prop="watermelon">🍉 Watermelon</button>
-          <button class="prop-selector-btn" data-prop="tire">🛞 Tire</button>
-          <button class="prop-selector-btn" data-prop="toilet">🚽 Toilet</button>
+          <button class="prop-selector-btn selected" data-prop="box"><span class="prop-emoji" aria-hidden="true">📦</span> Box</button>
+          <button class="prop-selector-btn" data-prop="chair"><span class="prop-emoji" aria-hidden="true">🪑</span> Chair</button>
+          <button class="prop-selector-btn" data-prop="plant"><span class="prop-emoji" aria-hidden="true">🪴</span> Plant</button>
+          <button class="prop-selector-btn" data-prop="barrel"><span class="prop-emoji" aria-hidden="true">🛢️</span> Barrel</button>
+          <button class="prop-selector-btn" data-prop="trash"><span class="prop-emoji" aria-hidden="true">🗑️</span> Trash</button>
+          <button class="prop-selector-btn" data-prop="watermelon"><span class="prop-emoji" aria-hidden="true">🍉</span> Watermelon</button>
+          <button class="prop-selector-btn" data-prop="tire"><span class="prop-emoji" aria-hidden="true">🛞</span> Tire</button>
+          <button class="prop-selector-btn" data-prop="toilet"><span class="prop-emoji" aria-hidden="true">🚽</span> Toilet</button>
         </div>
       </div>
 
       <!-- Quick How to Play Guide -->
       <div class="rules-summary-box">
-        <div class="rule-col">
-          <span class="rule-icon">🕵️</span>
+        <div class="rule-col rule-hunter">
+          <span class="rule-icon"><svg class="icon"><use href="#i-target"/></svg></span>
           <div>
             <strong>1 Hunter (Seeker)</strong>
-            <p>Observes from sky cage for 25s while props hide. When released, roam arena & <strong>Left-Click to Shoot</strong> suspicious objects!</p>
+            <p>Observes from the sky cage for 25s while props hide. When released, roam the arena &amp; <strong>Left-Click to Shoot</strong> suspicious objects!</p>
           </div>
         </div>
-        <div class="rule-col">
-          <span class="rule-icon">📦</span>
+        <div class="rule-col rule-prop">
+          <span class="rule-icon"><svg class="icon"><use href="#i-box"/></svg></span>
           <div>
             <strong>Props (Hiders)</strong>
             <p>Run, blend into the map, and press <strong>[F] to Freeze/Lock</strong>. Survive the round to WIN! (Props cannot shoot)</p>
@@ -158,12 +244,12 @@
       </div>
 
       <!-- Actions -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; width: 100%;">
-        <button id="btn-leave-room" class="btn-ghost">Leave Room</button>
-        <div id="wait-for-host-badge" class="badge-waiting-host" style="display: none;">
+      <div class="room-actions">
+        <button id="btn-leave-room" class="btn-ghost"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg> Leave Room</button>
+        <div id="wait-for-host-badge" class="badge-waiting-host" style="display: none;" role="status">
           <span class="pulse-dot"></span> ⏳ Waiting for Host to start match...
         </div>
-        <button id="btn-start-match" class="btn-neon-pink" style="display: none; font-size: 16px; padding: 12px 28px;">START MATCH 🎮</button>
+        <button id="btn-start-match" class="btn-neon-pink btn-lg" style="display: none;">START MATCH 🎮</button>
       </div>
     </div>
   </div>
@@ -172,61 +258,61 @@
   <div id="game-screen" class="screen">
     <!-- Click to focus pointer banner -->
     <div id="click-to-play-hint">
-      <span>🎯</span>
+      <span class="hint-icon"><svg class="icon"><use href="#i-target"/></svg></span>
       <h2>CLICK TO LOCK AIM</h2>
       <p>(Or drag mouse to look / WASD to move)</p>
     </div>
 
     <!-- Match Start: Role Briefing Splash Overlay -->
     <div id="role-briefing-modal" class="role-briefing-overlay" style="display: none;">
-      <div class="briefing-card" id="briefing-card">
+      <div class="briefing-card" id="briefing-card" role="dialog" aria-labelledby="briefing-title">
         <div class="briefing-icon" id="briefing-icon">🕵️</div>
         <div class="briefing-badge" id="briefing-badge">MISSION BRIEFING</div>
         <h2 class="briefing-title" id="briefing-title">YOU ARE THE HUNTER</h2>
         <p class="briefing-subtitle" id="briefing-subtitle">Find and eliminate all disguised props in the arena!</p>
         <div class="briefing-steps" id="briefing-steps"></div>
-        <button id="btn-close-briefing" class="btn-neon" style="margin-top: 14px; width: 100%;">LET'S GO! 🚀</button>
+        <button id="btn-close-briefing" class="btn-neon btn-block">LET'S GO <svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button>
       </div>
     </div>
 
     <!-- Phase Announcement Banner -->
-    <div id="phase-announcement">🚨 HUNTER IS RELEASED! RUN & HIDE! 🚨</div>
+    <div id="phase-announcement" role="status">🚨 HUNTER IS RELEASED! RUN & HIDE! 🚨</div>
 
     <!-- In-Game HUD Elements -->
     <div id="hud-overlay">
       <!-- Exit Button -->
-      <button id="btn-ingame-exit" class="btn-ghost" style="position: absolute; top: 20px; left: 20px; z-index: 20; font-size: 12px; padding: 8px 14px; pointer-events: auto;">🚪 Exit to Lobby</button>
+      <button id="btn-ingame-exit" class="btn-ghost hud-exit"><svg class="icon" aria-hidden="true"><use href="#i-door"/></svg><span class="hud-exit-text">Exit to Lobby</span></button>
 
       <!-- Top Center: Timer, Phase & Scoreboard -->
       <div class="hud-top">
         <div class="timer-box">
           <span id="hud-phase">HIDING PHASE ⏳</span>
           <span id="hud-timer">00:25</span>
-          <div id="hud-phase-hint" class="phase-hint">Props are hiding! Wait for release countdown...</div>
         </div>
+        <div id="hud-phase-hint" class="phase-hint">Props are hiding! Wait for release countdown...</div>
         <div class="hud-score-pill">
           <span id="hud-hunter-tag">🕵️ Hunter: <strong>Finding...</strong></span>
-          <span class="score-divider">|</span>
+          <span class="score-divider" aria-hidden="true"></span>
           <span id="hud-props-alive-tag">📦 Alive Props: <strong id="hud-props-alive-count">0</strong></span>
         </div>
       </div>
 
       <!-- Top Right: Kill feed & announcements -->
-      <div id="kill-feed" style="position: absolute; top: 90px; right: 25px; display: flex; flex-direction: column; gap: 6px;"></div>
-      <div id="taunt-feed" style="position: absolute; top: 150px; right: 25px; background: rgba(245, 158, 11, 0.9); padding: 8px 16px; border-radius: 8px; font-weight: 700; color: #000; display: none;"></div>
+      <div id="kill-feed" aria-live="polite"></div>
+      <div id="taunt-feed" aria-live="polite"></div>
 
       <!-- Bottom Left: Health, Role, Prop -->
       <div class="hud-bottom-left">
         <div class="health-container">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="health-row">
             <span id="hud-role" class="role-badge role-prop">PROP</span>
-            <span id="hud-health-text" style="font-weight: 800; font-size: 14px;">100 HP</span>
+            <span id="hud-health-text" class="health-text">100 HP</span>
           </div>
           <div class="health-bar-track">
             <div id="hud-health-bar" class="health-bar-fill"></div>
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-            <span id="hud-prop-type" style="font-size: 11px; color: var(--text-muted);">Prop: Box</span>
+          <div class="health-row health-row-sub">
+            <span id="hud-prop-type" class="hud-sub">Prop: Box</span>
             <span id="hud-freeze-status" class="badge-unlocked">UNLOCKED 🏃</span>
           </div>
         </div>
@@ -234,9 +320,9 @@
 
       <!-- In-Game Chat Box -->
       <div class="game-chat">
-        <div id="chat-messages" class="chat-box"></div>
+        <div id="chat-messages" class="chat-box" aria-live="polite"></div>
         <form id="chat-form">
-          <input type="text" id="chat-input" placeholder="Type message... (Enter)" autocomplete="off">
+          <input type="text" id="chat-input" placeholder="Type message... (Enter)" autocomplete="off" aria-label="Chat message">
         </form>
       </div>
 
@@ -258,49 +344,49 @@
         <!-- Mobile Action Buttons (Bottom Right) -->
         <div class="mobile-action-buttons">
           <!-- Hunter Shoot Button -->
-          <button id="btn-touch-shoot" class="mobile-action-btn btn-action-shoot" title="Shoot Blaster">
-            <span class="btn-icon">🎯</span>
+          <button id="btn-touch-shoot" class="mobile-action-btn btn-action-shoot" title="Shoot Blaster" aria-label="Fire">
+            <span class="btn-icon"><svg class="icon"><use href="#i-target"/></svg></span>
             <span class="btn-label">FIRE</span>
           </button>
 
           <!-- Prop Freeze / Lock Button -->
-          <button id="btn-touch-freeze" class="mobile-action-btn btn-action-freeze" title="Freeze Disguise">
-            <span class="btn-icon">🔒</span>
+          <button id="btn-touch-freeze" class="mobile-action-btn btn-action-freeze" title="Freeze Disguise" aria-label="Lock disguise">
+            <span class="btn-icon"><svg class="icon"><use href="#i-lock"/></svg></span>
             <span class="btn-label">LOCK</span>
           </button>
 
           <!-- Jump Button -->
-          <button id="btn-touch-jump" class="mobile-action-btn btn-action-jump" title="Jump">
-            <span class="btn-icon">🦘</span>
+          <button id="btn-touch-jump" class="mobile-action-btn btn-action-jump" title="Jump" aria-label="Jump">
+            <span class="btn-icon"><svg class="icon"><use href="#i-jump"/></svg></span>
             <span class="btn-label">JUMP</span>
           </button>
 
           <!-- Prop Quick Taunt Button -->
-          <button id="btn-touch-taunt" class="mobile-action-btn btn-action-taunt" title="Taunt Sound">
-            <span class="btn-icon">🗣️</span>
+          <button id="btn-touch-taunt" class="mobile-action-btn btn-action-taunt" title="Taunt Sound" aria-label="Taunt">
+            <span class="btn-icon"><svg class="icon"><use href="#i-megaphone"/></svg></span>
             <span class="btn-label">TAUNT</span>
           </button>
         </div>
 
         <!-- Mobile Floating Chat Toggle Button -->
-        <button id="btn-mobile-chat-toggle" class="btn-mobile-chat-toggle" title="Toggle Chat">💬</button>
+        <button id="btn-mobile-chat-toggle" class="btn-mobile-chat-toggle" title="Toggle Chat" aria-label="Toggle chat"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg></button>
       </div>
 
       <!-- Bottom Right: Taunts & Key Bindings -->
       <div class="hud-bottom-right">
         <div id="prop-taunt-panel" class="taunt-wheel">
-          <span style="font-size: 11px; color: var(--text-muted); align-self: center;">Taunts:</span>
-          <button class="taunt-btn" data-sound="whistle">🗣️ Whistle (T)</button>
+          <span class="taunt-label"><svg class="icon" aria-hidden="true"><use href="#i-megaphone"/></svg> Taunts</span>
+          <button class="taunt-btn" data-sound="whistle">🗣️ Whistle <kbd>T</kbd></button>
           <button class="taunt-btn" data-sound="quack">🦆 Quack</button>
           <button class="taunt-btn" data-sound="horn">🛺 Horn</button>
           <button class="taunt-btn" data-sound="fart">💨 Fart</button>
           <button class="taunt-btn" data-sound="laugh">😂 Laugh</button>
         </div>
-        <div class="hud-instructions" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div class="hud-instructions">
           <span id="hud-instructions-text">WASD: Move | Space: Jump | <strong>F/L: Lock Prop</strong></span>
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <button id="btn-toggle-touch" class="btn-ghost" style="padding: 2px 8px; font-size: 10px;">Touch: Auto</button>
-            <button id="btn-toggle-inverty" class="btn-ghost" style="padding: 2px 8px; font-size: 10px;">Invert Y: OFF</button>
+          <div class="hud-toggles">
+            <button id="btn-toggle-touch" class="btn-ghost btn-xs">Touch: Auto</button>
+            <button id="btn-toggle-inverty" class="btn-ghost btn-xs">Invert Y: OFF</button>
           </div>
         </div>
       </div>
@@ -308,69 +394,70 @@
   </div>
 
   <!-- 5. GAME OVER & FREE AI TROPHY MODAL -->
-  <div id="modal-gameover" class="app-modal" style="display: none;">
-    <div class="modal-box modal-box-wide">
+  <div id="modal-gameover" class="app-modal modal-over-scene" style="display: none;">
+    <div class="modal-box modal-box-wide gameover-box" role="dialog" aria-labelledby="gameover-winner-title">
+      <div class="eyebrow eyebrow-center">Match complete</div>
       <h2 id="gameover-winner-title" class="winner-props-text">🏆 SNEAKY PROPS SURVIVED! 🏆</h2>
-      <p id="gameover-msg" style="text-align: center; color: var(--text-muted);"></p>
+      <p id="gameover-msg" class="gameover-msg"></p>
 
       <!-- AI Trophy Showcase -->
       <div class="trophy-showcase">
-        <h3 id="gameover-trophy-title" style="color: var(--amber); font-size: 15px;">🎁 FREE REWARD: Secret Agent Badge</h3>
+        <h3 id="gameover-trophy-title">🎁 FREE REWARD: Secret Agent Badge</h3>
         <img id="gameover-trophy-img" src="" alt="Free AI Generated Trophy" />
-        <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
-          ⚡ Generated dynamically via Free Pollinations AI & saved to your Agent Vault!
+        <div class="trophy-note">
+          Generated dynamically via free Pollinations AI &amp; saved to your Agent Vault!
         </div>
-        <div style="display: flex; gap: 10px; margin-top: 8px;">
-          <button id="btn-download-trophy" class="btn-neon">Download High-Res Badge 📥</button>
-        </div>
+        <button id="btn-download-trophy" class="btn-neon"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg> Download High-Res Badge</button>
       </div>
 
-      <div style="display: flex; justify-content: center; gap: 14px; margin-top: 14px; flex-wrap: wrap;">
-        <button id="btn-play-again" class="btn-neon">🎮 Play Again (Same Room)</button>
-        <button id="btn-return-lobby" class="btn-ghost">🏠 Return to Main Lobby</button>
+      <div class="gameover-actions">
+        <button id="btn-play-again" class="btn-neon btn-lg"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg> Play Again (Same Room)</button>
+        <button id="btn-return-lobby" class="btn-ghost btn-lg"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg> Return to Main Lobby</button>
       </div>
     </div>
   </div>
 
   <!-- 6. AGENT VAULT MODAL (Unlocked AI Trophies) -->
   <div id="modal-vault" class="app-modal" style="display: none;">
-    <div class="modal-box modal-box-wide">
+    <div class="modal-box modal-box-wide" role="dialog" aria-labelledby="vault-title">
       <div class="modal-header">
-        <h2>🏆 Secret Agent Vault & AI Gifts</h2>
-        <button id="btn-close-modal" class="close-modal-btn">&times;</button>
+        <h2 id="vault-title"><span class="h-icon h-icon-amber"><svg class="icon"><use href="#i-trophy"/></svg></span> Secret Agent Vault</h2>
+        <button id="btn-close-modal" class="close-modal-btn" aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button>
       </div>
 
       <!-- Stats Bar -->
-      <div style="display: flex; gap: 16px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;">
-        <div>Wins: <strong id="vault-wins" style="color: var(--cyan);">0</strong></div>
-        <div>Matches: <strong id="vault-matches">0</strong></div>
-        <div>Hunter Kills: <strong id="vault-kills" style="color: var(--pink);">0</strong></div>
+      <div class="stats-bar">
+        <div class="stat"><span class="stat-label">Wins</span><strong id="vault-wins" class="stat-cyan">0</strong></div>
+        <div class="stat"><span class="stat-label">Matches</span><strong id="vault-matches">0</strong></div>
+        <div class="stat"><span class="stat-label">Hunter Kills</span><strong id="vault-kills" class="stat-pink">0</strong></div>
       </div>
 
-      <h3 style="font-size: 14px; color: var(--amber);">Your Unlocked AI Trophies & Badges:</h3>
+      <h3 class="section-label section-label-amber"><svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg> Your unlocked AI trophies &amp; badges</h3>
       <div id="vault-trophies-list" class="vault-trophies-grid"></div>
     </div>
   </div>
 
   <!-- 7. LEADERBOARD MODAL -->
   <div id="modal-leaderboard" class="app-modal" style="display: none;">
-    <div class="modal-box">
+    <div class="modal-box" role="dialog" aria-labelledby="leaderboard-title">
       <div class="modal-header">
-        <h2>🥇 Global Leaderboard</h2>
-        <button id="btn-close-leaderboard" class="close-modal-btn">&times;</button>
+        <h2 id="leaderboard-title"><span class="h-icon h-icon-cyan"><svg class="icon"><use href="#i-podium"/></svg></span> Global Leaderboard</h2>
+        <button id="btn-close-leaderboard" class="close-modal-btn" aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button>
       </div>
 
-      <table class="leaderboard-table">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Agent</th>
-            <th>Wins</th>
-            <th>AI Trophies</th>
-          </tr>
-        </thead>
-        <tbody id="leaderboard-body"></tbody>
-      </table>
+      <div class="table-wrap">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Agent</th>
+              <th>Wins</th>
+              <th>AI Trophies</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -379,6 +466,13 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/toast.js"></script>
   <script src="/js/audio.js"></script>
+  <script src="/js/graphics.js"></script>
+  <script>
+    // Mirror the graphics quality tier onto <html> so the UI can drop costly blur on low-end devices.
+    if (window.GFX && window.GFX.quality && window.GFX.quality.low) {
+      document.documentElement.classList.add('quality-low');
+    }
+  </script>
   <script src="/js/textures.js"></script>
   <script src="/js/props.js"></script>
   <script src="/js/map.js"></script>
