@@ -156,6 +156,28 @@ io.on('connection', (socket) => {
     });
   });
 
+  // === WEBRTC LIVE VOICE CHAT SIGNALING ===
+  socket.on('voice_signal', (data) => {
+    // Forward WebRTC SDP offer/answer or ICE candidate directly to the destination peer
+    if (data && data.to) {
+      io.to(data.to).emit('voice_signal', {
+        from: socket.id,
+        signal: data.signal
+      });
+    }
+  });
+
+  socket.on('voice_status', (data) => {
+    // Broadcast player's speaking / mute state to other room members
+    const roomId = roomManager.playerRooms.get(socket.id);
+    if (!roomId) return;
+    socket.to(roomId).emit('voice_status', {
+      socketId: socket.id,
+      isMuted: !!data?.isMuted,
+      isSpeaking: !!data?.isSpeaking
+    });
+  });
+
   // Disconnection
   socket.on('disconnect', () => {
     console.log(`[Socket Disconnected] ID: ${socket.id}`);

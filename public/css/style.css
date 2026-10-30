@@ -3488,3 +3488,307 @@ body.has-touch-controls #kill-feed {
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   WebRTC Live Voice Chat (Standard Room Discord-Style Audio)
+   ========================================================================== */
+
+/* 1. Lobby Waiting Room Voice Bar */
+.voice-lobby-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(34, 230, 255, 0.25);
+  border-radius: var(--r-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap;
+}
+
+.voice-status-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.voice-pulse-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #64748b;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.voice-pulse-indicator.live {
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.voice-pulse-indicator.speaking {
+  background: #10b981;
+  box-shadow: 0 0 12px #10b981;
+  animation: pulse-speaker 0.6s infinite alternate;
+}
+
+.voice-pulse-indicator.muted {
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+.voice-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-voice-toggle,
+.btn-voice-deafen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: var(--r-sm);
+  transition: all 0.2s ease;
+}
+
+.btn-voice-toggle.voice-active {
+  background: rgba(34, 230, 255, 0.15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.btn-voice-toggle.voice-speaking {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+.btn-voice-toggle.voice-muted {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.btn-voice-deafen.voice-deafened {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* 2. In-Game HUD Voice Controls (Top Left) */
+.hud-top-left {
+  position: absolute;
+  top: calc(18px + var(--safe-t));
+  left: calc(18px + var(--safe-l));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.hud-top-left .hud-exit {
+  position: static;
+  top: auto;
+  left: auto;
+}
+
+.hud-voice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 9px 12px;
+  background: var(--glass-hud);
+  -webkit-backdrop-filter: var(--hud-blur);
+  backdrop-filter: var(--hud-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+.hud-voice-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.hud-voice-btn.voice-active {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.hud-voice-btn.voice-speaking {
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+  animation: pulse-speaker 0.6s infinite alternate;
+}
+
+.hud-voice-btn.voice-muted {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+.hud-voice-btn.voice-deafened {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* 3. Discord-Style Active Speakers Floating Overlay */
+.voice-speakers-overlay {
+  position: absolute;
+  top: calc(68px + var(--safe-t));
+  left: calc(18px + var(--safe-l));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.voice-speaker-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(11, 15, 25, 0.88);
+  border: 1.5px solid #10b981;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: rise-in 0.2s ease both;
+}
+
+.voice-speaker-badge.speaker-me {
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px rgba(34, 230, 255, 0.45);
+}
+
+.speaker-wave-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-speaker 0.5s infinite alternate;
+}
+
+.speaker-me .speaker-wave-dot {
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+@keyframes pulse-speaker {
+  from { transform: scale(0.9); opacity: 0.7; }
+  to { transform: scale(1.25); opacity: 1; }
+}
+
+/* 4. Player Item Voice Indicator in Waiting Room */
+.player-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.player-voice-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.player-voice-indicator.live {
+  color: var(--cyan);
+  border-color: rgba(34, 230, 255, 0.5);
+  background: rgba(34, 230, 255, 0.12);
+}
+
+.player-voice-indicator.speaking {
+  color: #10b981;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+  animation: pulse-speaker 0.8s infinite alternate;
+}
+
+.player-voice-indicator.muted {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* 5. Mobile Touch Action Mic Button */
+.btn-action-mic {
+  width: 52px;
+  height: 52px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid var(--border);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--text-main);
+}
+
+.btn-action-mic.voice-active {
+  background: rgba(34, 230, 255, 0.2);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 14px rgba(34, 230, 255, 0.4);
+}
+
+.btn-action-mic.voice-speaking {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.7);
+}
+
+.btn-action-mic.voice-muted {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+/* 6. Responsive Voice Styles */
+@media (max-width: 900px) {
+  .hud-top-left {
+    top: calc(10px + var(--safe-t));
+    left: calc(10px + var(--safe-l));
+    gap: 6px;
+  }
+  .hud-voice-btn {
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    justify-content: center;
+  }
+  .hud-voice-btn .hud-btn-text {
+    display: none;
+  }
+  .voice-speakers-overlay {
+    top: calc(62px + var(--safe-t));
+    left: calc(10px + var(--safe-l));
+  }
+}
+

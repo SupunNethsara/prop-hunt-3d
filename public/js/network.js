@@ -21,6 +21,9 @@ class NetworkClient {
     this.socket.on('create_room_response', (res) => {
       if (res.success) {
         window.authUI.showRoomScreen(res.room);
+        if (window.voiceChat) {
+          window.voiceChat.enterRoom(res.room);
+        }
         window.showToast(`Room created! Code: ${res.room.id}`, 'success', 'ROOM READY');
       } else {
         window.showToast(res.message, 'error', 'ROOM ERROR');
@@ -46,6 +49,10 @@ class NetworkClient {
           window.authUI.showRoomScreen(res.room);
           window.showToast(`Joined Room ${res.room.id}!`, 'success', 'CONNECTED');
         }
+
+        if (window.voiceChat) {
+          window.voiceChat.enterRoom(res.room);
+        }
       } else {
         window.showToast(res.message, 'warning', 'CANNOT JOIN');
       }
@@ -54,6 +61,9 @@ class NetworkClient {
     this.socket.on('room_update', (room) => {
       this.currentRoom = room;
       window.authUI.updateRoomScreen(room);
+      if (window.voiceChat) {
+        window.voiceChat.onRoomUpdate(room);
+      }
     });
 
     // Remote player joined while match is already active
