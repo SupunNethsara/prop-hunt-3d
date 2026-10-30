@@ -1072,9 +1072,9 @@ class GameEngine {
 
     if (instElem) {
       if (this.localPlayer.role === 'hunter') {
-        instElem.innerHTML = 'WASD: Move | Space: Jump | <strong style="color:var(--cyan);">Left-Click: 🎯 Shoot Blaster</strong> | Scan suspicious props!';
+        instElem.innerHTML = 'WASD: Move | Space: Jump | <strong style="color:var(--cyan);">Left-Click: 🎯 Shoot</strong> | <strong>V: 🎙️ Mic</strong>';
       } else {
-        instElem.innerHTML = 'WASD: Move | Space: Jump | <strong style="color:var(--pink);">F/L: 🔒 Freeze/Lock Disguise</strong> | T: 🗣️ Taunt';
+        instElem.innerHTML = 'WASD: Move | Space: Jump | <strong style="color:var(--pink);">F/L: 🔒 Freeze</strong> | T: 🗣️ Taunt | <strong>V: 🎙️ Mic</strong>';
       }
     }
 

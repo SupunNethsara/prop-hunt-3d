@@ -286,6 +286,9 @@ class AuthUI {
   handleLeaveRoom() {
     this.currentRoomId = null;
     window.network.leaveRoom();
+    if (window.voiceChat) {
+      window.voiceChat.leaveRoom();
+    }
     document.getElementById('room-screen').classList.remove('active');
     document.getElementById('game-screen').classList.remove('active');
     document.getElementById('lobby-screen').classList.add('active');
@@ -308,6 +311,9 @@ class AuthUI {
     }
     this.currentRoomId = null;
     window.network.leaveRoom();
+    if (window.voiceChat) {
+      window.voiceChat.leaveRoom();
+    }
     document.getElementById('game-screen').classList.remove('active');
     document.getElementById('room-screen').classList.remove('active');
     document.getElementById('lobby-screen').classList.add('active');
@@ -334,12 +340,21 @@ class AuthUI {
       const item = document.createElement('div');
       item.className = 'player-item';
       item.innerHTML = `
-        <span class="player-name">${p.displayName}</span>
+        <div class="player-name-wrap">
+          <span class="player-voice-indicator muted" data-player-id="${p.id}" title="Voice state">
+            <svg class="icon icon-xs"><use href="#i-mic-off"/></svg>
+          </span>
+          <span class="player-name">${p.displayName}</span>
+        </div>
         <span class="player-prop-badge">${p.propType || 'Random'}</span>
         ${p.id === room.hostId ? '<span class="badge-host">👑 HOST</span>' : ''}
       `;
       playerList.appendChild(item);
     });
+
+    if (window.voiceChat) {
+      window.voiceChat.updateUI();
+    }
 
     const isHost = (window.network.socket.id === room.hostId);
     const startBtn = document.getElementById('btn-start-match');

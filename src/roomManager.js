@@ -100,6 +100,7 @@ class RoomManager {
 
     // Notify room
     this.io.to(roomId).emit('room_update', this.getRoomDetails(room));
+    socket.to(roomId).emit('voice_peer_joined', { socketId: socket.id, displayName: player.displayName });
     if (room.state === 'HIDING' || room.state === 'HUNTING') {
       socket.to(roomId).emit('player_joined_midgame', player);
     }
@@ -118,6 +119,7 @@ class RoomManager {
       delete room.players[socket.id];
       socket.leave(roomId);
       this.playerRooms.delete(socket.id);
+      this.io.to(roomId).emit('voice_peer_left', { socketId: socket.id });
 
       // If host left, elect new host
       const playerIds = Object.keys(room.players);

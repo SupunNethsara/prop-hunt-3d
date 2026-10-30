@@ -38,6 +38,10 @@
       <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></symbol>
       <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></symbol>
       <symbol id="i-mask" viewBox="0 0 24 24"><path d="M3 7c3-1.5 6-1.5 9 0 3-1.5 6-1.5 9 0 0 6-3 10-6 10-1.5 0-2.3-1.5-3-3-.7 1.5-1.5 3-3 3-3 0-6-4-6-10Z"/><path d="M7 10.5h2.5M14.5 10.5H17"/></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"/></symbol>
+      <symbol id="i-mic-off" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2M5 10v2a7 7 0 0 0 10.74 5.91M15 9.34V5a3 3 0 0 0-5.68-1.33M9 9v3a3 3 0 0 0 3 3c.38 0 .74-.07 1.07-.2M12 19v3M8 22h8"/></symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+      <symbol id="i-volume-x" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></symbol>
     </defs>
   </svg>
 
@@ -225,6 +229,24 @@
         </div>
       </div>
 
+      <!-- Live Voice Chat Bar in Lobby -->
+      <div class="voice-lobby-bar">
+        <div class="voice-status-info">
+          <span class="voice-pulse-indicator" id="lobby-voice-indicator"></span>
+          <span id="lobby-voice-status">🎙️ Live Voice Chat: <strong>Muted</strong> (Click to Unmute / Hotkey: V)</span>
+        </div>
+        <div class="voice-actions">
+          <button id="btn-lobby-mic" class="btn-ghost btn-sm btn-voice-toggle" title="Toggle Mic (V)">
+            <svg class="icon"><use href="#i-mic-off"/></svg>
+            <span class="btn-voice-label">MIC MUTE</span>
+          </button>
+          <button id="btn-lobby-deafen" class="btn-ghost btn-sm btn-voice-deafen" title="Mute all incoming audio">
+            <svg class="icon"><use href="#i-volume"/></svg>
+            <span class="btn-deafen-label">DEAFEN</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Quick How to Play Guide -->
       <div class="rules-summary-box">
         <div class="rule-col rule-hunter">
@@ -280,8 +302,20 @@
 
     <!-- In-Game HUD Elements -->
     <div id="hud-overlay">
-      <!-- Exit Button -->
-      <button id="btn-ingame-exit" class="btn-ghost hud-exit"><svg class="icon" aria-hidden="true"><use href="#i-door"/></svg><span class="hud-exit-text">Exit to Lobby</span></button>
+      <!-- Top Left: Exit & In-Game Voice Buttons -->
+      <div class="hud-top-left">
+        <button id="btn-ingame-exit" class="btn-ghost hud-exit"><svg class="icon" aria-hidden="true"><use href="#i-door"/></svg><span class="hud-exit-text">Exit</span></button>
+        <button id="btn-hud-mic" class="btn-ghost hud-voice-btn voice-muted" title="Toggle Mic (V)" aria-label="Toggle mic">
+          <svg class="icon"><use href="#i-mic-off"/></svg>
+          <span class="hud-btn-text">Mic</span>
+        </button>
+        <button id="btn-hud-deafen" class="btn-ghost hud-voice-btn" title="Deafen / Mute incoming audio" aria-label="Deafen">
+          <svg class="icon"><use href="#i-volume"/></svg>
+        </button>
+      </div>
+
+      <!-- Active Speakers Discord-Style Overlay (Top Left, under buttons) -->
+      <div id="voice-speakers-overlay" class="voice-speakers-overlay" style="display: none;"></div>
 
       <!-- Top Center: Timer, Phase & Scoreboard -->
       <div class="hud-top">
@@ -343,6 +377,12 @@
 
         <!-- Mobile Action Buttons (Bottom Right) -->
         <div class="mobile-action-buttons">
+          <!-- Voice Mic Button on Mobile -->
+          <button id="btn-touch-mic" class="mobile-action-btn btn-action-mic voice-muted" title="Toggle Mic" aria-label="Toggle mic">
+            <span class="btn-icon"><svg class="icon"><use href="#i-mic-off"/></svg></span>
+            <span class="btn-label">MIC</span>
+          </button>
+
           <!-- Hunter Shoot Button -->
           <button id="btn-touch-shoot" class="mobile-action-btn btn-action-shoot" title="Shoot Blaster" aria-label="Fire">
             <span class="btn-icon"><svg class="icon"><use href="#i-target"/></svg></span>
@@ -466,6 +506,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/toast.js"></script>
   <script src="/js/audio.js"></script>
+  <script src="/js/voice.js"></script>
   <script src="/js/graphics.js"></script>
   <script>
     // Mirror the graphics quality tier onto <html> so the UI can drop costly blur on low-end devices.
